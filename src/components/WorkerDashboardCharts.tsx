@@ -14,6 +14,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { PhoneCall, Sparkles, TrendingUp, DollarSign, CheckCircle2 } from 'lucide-react';
 import { CommissionConfig, DEFAULT_COMMISSION_CONFIG } from '@/types/crm';
 
 interface WorkerPerformanceProps {

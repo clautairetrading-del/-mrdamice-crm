@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Lead, Call, Profile } from '@/types/crm';
+import { Lead, Call, Profile, CommissionConfig, DEFAULT_COMMISSION_CONFIG } from '@/types/crm';
 import { FileText, Download, Calendar, PhoneCall, CheckCircle2, Award, TrendingUp, Clock } from 'lucide-react';
 
 interface WorkerReportsViewProps {
   currentProfile: Profile;
   myLeads: Lead[];
   calls: Call[];
+  commissionConfig?: CommissionConfig;
 }
 
-export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerReportsViewProps) {
+export function WorkerReportsView({ currentProfile, myLeads, calls, commissionConfig = DEFAULT_COMMISSION_CONFIG }: WorkerReportsViewProps) {
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'overall'>('today');
   const [isExporting, setIsExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
