@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
   if (loading || !currentProfile) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center text-gray-900 dark:text-white">
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-gray-900 dark:text-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Chargement du CRM Mr Damice...</p>
@@ -108,10 +108,10 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex transition-colors duration-200">
       
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200/80 dark:border-gray-700/80 p-6 flex flex-col justify-between hidden md:flex transition-colors duration-200 shadow-sm dark:shadow-none">
+      <aside className="w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200/80 dark:border-gray-700/80 p-6 flex flex-col justify-between hidden md:flex transition-colors duration-200">
         <div className="space-y-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3">
@@ -131,7 +131,7 @@ export default function DashboardPage() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
                 activeTab === 'dashboard'
                   ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <LayoutDashboard className="w-5 h-5" />
@@ -143,7 +143,7 @@ export default function DashboardPage() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
                 activeTab === 'leads'
                   ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <Users className="w-5 h-5" />
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
                   activeTab === 'admin'
                     ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <Shield className="w-5 h-5" />
@@ -167,7 +167,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Profile Card Bottom */}
-        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
               {currentProfile.full_name.charAt(0).toUpperCase()}
@@ -183,7 +183,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto space-y-8">
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto space-y-8 bg-white dark:bg-gray-900">
         
         {/* Top Bar Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200/80 dark:border-gray-800 pb-6">
@@ -242,7 +242,7 @@ export default function DashboardPage() {
                 placeholder="Fè rechèch pa non, imèl oswa telefòn..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500 shadow-sm dark:shadow-none"
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
               />
             </div>
 
