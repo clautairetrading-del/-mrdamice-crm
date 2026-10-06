@@ -75,12 +75,25 @@ export default function DashboardPage() {
     const { data: leadsData } = await supabase
       .from('leads')
       .select('*, assigned_agent:profiles!assigned_to(*)');
-    if (leadsData) setLeads(leadsData);
+    
+    if (leadsData && leadsData.length > 0) {
+      setLeads(leadsData);
+    }
 
     const { data: callsData } = await supabase.from('calls').select('*');
     if (callsData) setCalls(callsData);
 
     setLoading(false);
+  };
+
+  // Helper to instantly append a newly created lead in local state without reloading
+  const handleAddNewLeadLocally = (newLead: Lead) => {
+    setLeads((prevLeads) => {
+      // Check if lead already exists in state by phone or id
+      const exists = prevLeads.some((l) => l.phone === newLead.phone || l.id === newLead.id);
+      if (exists) return prevLeads;
+      return [newLead, ...prevLeads];
+    });
   };
 
   const handleSignOut = async () => {
@@ -357,7 +370,7 @@ export default function DashboardPage() {
                     {filteredLeads.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                          Pa gen okenn lead ki korispann ak rechèch ou an.
+                          Pa gen okenn lead nan lis la pou kounya. Klike sou "Ajoute Nouvo Lead" pou w kreye youn!
                         </td>
                       </tr>
                     ) : (
@@ -378,7 +391,7 @@ export default function DashboardPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
-                            {lead.assigned_agent?.full_name || 'Mwen menm'}
+                            {lead.assigned_agent?.full_name || currentProfile.full_name}
                           </td>
                           <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                             <button
@@ -456,7 +469,12 @@ export default function DashboardPage() {
       <AddLeadModal
         isOpen={isAddLeadOpen}
         onClose={() => setIsAddLeadOpen(false)}
-        onSuccess={() => fetchSessionAndData()}
+        onSuccess={(createdLead) => {
+          if (createdLead) {
+            handleAddNewLeadLocally(createdLead);
+          }
+          fetchSessionAndData();
+        }}
         agentId={currentProfile.id}
       />
 
