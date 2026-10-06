@@ -10,16 +10,17 @@ import { HistoryLogModal } from '@/components/HistoryLogModal';
 import { CalendarView } from '@/components/CalendarView';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
+import { WorkerReportsView } from '@/components/WorkerReportsView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText } from 'lucide-react';
 
 const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin'>('dashboard');
 
   // Modal States
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
@@ -368,6 +369,19 @@ export default function DashboardPage() {
               Kalandriye Follow-Up
             </button>
 
+            {/* NEW REPORTS & PERFORMANCE MENU BUTTON */}
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'reports'
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <FileText className="w-5 h-5" />
+              Rapò & Pèfòmans PDF
+            </button>
+
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('admin')}
@@ -445,6 +459,7 @@ export default function DashboardPage() {
               {activeTab === 'dashboard' && 'Dashboard Pèfòmans'}
               {activeTab === 'leads' && 'Jesyion Leads ak Apèl yo'}
               {activeTab === 'calendar' && 'Kalandriye Follow-Up Apèl yo'}
+              {activeTab === 'reports' && 'Rapò Ak Pèfòmans Mwen (Export PDF)'}
               {activeTab === 'admin' && 'Rapò Global pou Admin'}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
@@ -486,6 +501,15 @@ export default function DashboardPage() {
               { date: 'Jedi', calls: 22 },
               { date: 'Vandredi', calls: 18 },
             ]}
+          />
+        )}
+
+        {/* Tab 5: Worker Reports View */}
+        {activeTab === 'reports' && (
+          <WorkerReportsView
+            currentProfile={currentProfile}
+            myLeads={leads}
+            calls={calls}
           />
         )}
 
