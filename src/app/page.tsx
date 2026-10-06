@@ -4,20 +4,22 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Profile, Lead, Call, HistoryLog } from '@/types/crm';
 import { AddCallModal } from '@/components/AddCallModal';
+import { ImportCSVModal } from '@/components/ImportCSVModal';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { HistoryLogViewer } from '@/components/HistoryLogViewer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'admin'>('dashboard');
 
-  // Modal State
+  // Modal States
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
+  const [isImportCSVOpen, setIsImportCSVOpen] = useState(false);
   const [selectedLeadForLogs, setSelectedLeadForLogs] = useState<Lead | null>(null);
 
   // Data States
@@ -28,6 +30,7 @@ export default function DashboardPage() {
 
   // Search Filter
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchSessionAndData();
@@ -126,9 +129,10 @@ export default function DashboardPage() {
   // Filtered Leads
   const filteredLeads = leads.filter(
     (l) =>
-      l.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.phone.includes(searchTerm) ||
-      (l.email && l.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      (statusFilter === 'all' || l.current_status === statusFilter) &&
+      (l.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        l.phone.includes(searchTerm) ||
+        (l.email && l.email.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   return (
@@ -232,10 +236,20 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Header Controls: Theme Toggle & Add Call CTA */}
-          <div className="flex items-center gap-3">
+          {/* Header Controls: Theme Toggle & Actions */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <ThemeToggle />
 
+            {/* Import CSV Button */}
+            <button
+              onClick={() => setIsImportCSVOpen(true)}
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 px-4 py-2.5 rounded-xl font-bold transition-all text-sm shadow-sm"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-amber-500" />
+              Enpòte CSV
+            </button>
+
+            {/* Add Call Button */}
             <button
               onClick={() => setIsAddCallOpen(true)}
               className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-amber-500/20 transition-all text-sm"
@@ -269,16 +283,40 @@ export default function DashboardPage() {
         {activeTab === 'leads' && (
           <div className="space-y-6">
             
-            {/* Search Input */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Fè rechèch pa non, imèl oswa telefòn..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
-              />
+            {/* Header & Controls bar for Leads */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              
+              {/* Search Bar */}
+              <div className="relative w-full sm:max-w-md">
+                <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Fè rechèch pa non, imèl oswa telefòn..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 shrink-0">Filtre pa Estati:</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">Tout Estati yo</option>
+                  <option value="Poko rele">Poko rele</option>
+                  <option value="Pa jwenn li">Pa jwenn li</option>
+                  <option value="Gen follow up">Gen follow up</option>
+                  <option value="Pa enterese">Pa enterese</option>
+                  <option value="Mwen pale ak li">Mwen pale ak li</option>
+                  <option value="Close">Close</option>
+                  <option value="Assistance">Assistance</option>
+                </select>
+              </div>
+
             </div>
 
             {/* Table */}
@@ -295,32 +333,47 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {filteredLeads.map((lead) => (
-                      <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                          <div>{lead.full_name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">{lead.email || 'Pas d\'email'}</div>
-                        </td>
-                        <td className="px-6 py-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">{lead.phone}</td>
-                        <td className="px-6 py-4">
-                          <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-3 py-1 rounded-full text-xs font-semibold">
-                            {lead.current_status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
-                          {lead.assigned_agent?.full_name || 'Mwen menm'}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => fetchLeadLogs(lead)}
-                            className="inline-flex items-center gap-1.5 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg transition-colors font-medium"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-amber-500" />
-                            Wè Istorik Log
-                          </button>
+                    {filteredLeads.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                          Pa gen okenn lead ki korispann ak rechèch ou an.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredLeads.map((lead) => (
+                        <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
+                          <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
+                            <div>{lead.full_name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">{lead.email || 'Pas d\'email'}</div>
+                          </td>
+                          <td className="px-6 py-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">{lead.phone}</td>
+                          <td className="px-6 py-4">
+                            <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-3 py-1 rounded-full text-xs font-semibold">
+                              {lead.current_status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                            {lead.assigned_agent?.full_name || 'Mwen menm'}
+                          </td>
+                          <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setIsAddCallOpen(true)}
+                              className="inline-flex items-center gap-1 text-xs bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
+                            >
+                              <PhoneCall className="w-3.5 h-3.5" />
+                              Rele
+                            </button>
+                            <button
+                              onClick={() => fetchLeadLogs(lead)}
+                              className="inline-flex items-center gap-1.5 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-amber-500" />
+                              Istorik Log
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -368,6 +421,14 @@ export default function DashboardPage() {
         onClose={() => setIsAddCallOpen(false)}
         onSuccess={() => fetchSessionAndData()}
         myLeads={leads}
+        agentId={currentProfile.id}
+      />
+
+      {/* Import CSV Modal */}
+      <ImportCSVModal
+        isOpen={isImportCSVOpen}
+        onClose={() => setIsImportCSVOpen(false)}
+        onSuccess={() => fetchSessionAndData()}
         agentId={currentProfile.id}
       />
     </div>
