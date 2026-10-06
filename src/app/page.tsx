@@ -40,9 +40,94 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  // Notifications State
+  const [notifiedLeadIds, setNotifiedLeadIds] = useState<Set<string>>(new Set());
+  const [activeBanner, setActiveBanner] = useState<{ leadName: string; phone: string; time: string } | null>(null);
+
   useEffect(() => {
     fetchSessionAndData();
+    // Request Browser Notification Permission on App Load
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
   }, []);
+
+  // Audio Beep Sound Alert using Web Audio API (compatible across browsers without external asset files)
+  const playNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 note
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3); // A5 note
+
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (err) {
+      console.warn('Audio play error:', err);
+    }
+  };
+
+  // Background scanner checking every 15 seconds for calls scheduled in exactly ~10 minutes
+  useEffect(() => {
+    if (!leads.length) return;
+
+    const checkUpcomingCalls = () => {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      leads.forEach((lead) => {
+        if (lead.current_status === 'Gen follow up' && lead.followup_date === todayStr && lead.followup_time) {
+          // Parse follow up target date/time
+          const [hours, minutes] = lead.followup_time.split(':').map(Number);
+          const targetTime = new Date(now);
+          targetTime.setHours(hours, minutes, 0, 0);
+
+          const diffMs = targetTime.getTime() - now.getTime();
+          const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+          // Trigger alert if call is between 0 and 10 minutes away and hasn't been notified yet
+          if (diffMinutes >= 0 && diffMinutes <= 10 && !notifiedLeadIds.has(lead.id)) {
+            setNotifiedLeadIds((prev) => new Set(prev).add(lead.id));
+
+            // 1. Play sound alert
+            playNotificationSound();
+
+            // 2. Trigger browser native notification
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('🔔 RAPÈL APÈL (CRM MR DAMICE)', {
+                body: `Ou gen yon apèl ranvwaye nan ${diffMinutes === 0 ? 'mwens pase 1 minit' : diffMinutes + ' minit'} ak ${lead.full_name} (${lead.phone})!`,
+                icon: '/images/welcome.jpg',
+              });
+            }
+
+            // 3. Trigger persistent on-screen banner toast alert
+            setActiveBanner({
+              leadName: lead.full_name,
+              phone: lead.phone,
+              time: lead.followup_time,
+            });
+          }
+        }
+      });
+    };
+
+    checkUpcomingCalls();
+    const interval = setInterval(checkUpcomingCalls, 15000);
+    return () => clearInterval(interval);
+  }, [leads, notifiedLeadIds]);
 
   const fetchSessionAndData = async (userProfile?: Profile) => {
     setLoading(true);
@@ -306,8 +391,33 @@ export default function DashboardPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto space-y-8 bg-white dark:bg-gray-900">
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto space-y-8 bg-white dark:bg-gray-900 relative">
         
+        {/* POPUP NOTIFICATION BANNER TOAST FOR UPCOMING 10-MIN CALLS */}
+        {activeBanner && (
+          <div className="bg-amber-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between animate-bounce border-2 border-amber-400">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-white/20 rounded-xl text-white font-extrabold text-lg">
+                🔔
+              </div>
+              <div>
+                <p className="font-extrabold text-sm uppercase tracking-wide">
+                  RAPÈL APÈL NAN ~10 MINIT!
+                </p>
+                <p className="text-xs text-amber-100 font-medium mt-0.5">
+                  Ou gen yon apèl avèk <strong className="text-white underline">{activeBanner.leadName}</strong> ({activeBanner.phone}) ki fèt pou <strong className="text-white">{activeBanner.time}</strong>!
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveBanner(null)}
+              className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            >
+              Dakò (Fèmen)
+            </button>
+          </div>
+        )}
+
         {/* Top Bar Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
           <div>
