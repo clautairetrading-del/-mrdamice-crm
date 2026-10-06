@@ -31,70 +31,58 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchSessionAndData();
-
-    // Listen to Auth State changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        fetchSessionAndData();
-      } else {
-        setCurrentProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
   }, []);
 
-  const fetchSessionAndData = async () => {
+  const fetchSessionAndData = async (userProfile?: Profile) => {
     setLoading(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
+    let activeUser = userProfile || currentProfile;
 
-    if (!session) {
+    if (!activeUser) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (profile) activeUser = profile;
+      }
+    }
+
+    if (!activeUser) {
       setCurrentProfile(null);
       setLoading(false);
       return;
     }
 
-    const userId = session.user.id;
+    setCurrentProfile(activeUser);
 
-    // Fetch user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (profile) {
-      setCurrentProfile(profile);
-
-      // Fetch all profiles for dropdowns & admin view
-      const { data: profilesData } = await supabase.from('profiles').select('*');
-      if (profilesData) setAllProfiles(profilesData);
-
-      // Fetch Leads & Calls (RLS will automatically filter for workers vs admin)
-      const { data: leadsData } = await supabase
-        .from('leads')
-        .select('*, assigned_agent:profiles!assigned_to(*)');
-      if (leadsData) setLeads(leadsData);
-
-      const { data: callsData } = await supabase.from('calls').select('*');
-      if (callsData) setCalls(callsData);
+    // Fetch profiles & leads
+    const { data: profilesData } = await supabase.from('profiles').select('*');
+    if (profilesData && profilesData.length > 0) {
+      setAllProfiles(profilesData);
+    } else {
+      setAllProfiles([activeUser]);
     }
+
+    const { data: leadsData } = await supabase
+      .from('leads')
+      .select('*, assigned_agent:profiles!assigned_to(*)');
+    if (leadsData) setLeads(leadsData);
+
+    const { data: callsData } = await supabase.from('calls').select('*');
+    if (callsData) setCalls(callsData);
 
     setLoading(false);
   };
 
   const handleSignOut = async () => {
-    if (currentProfile) {
-      await supabase
-        .from('profiles')
-        .update({ is_online: false, last_seen_at: new Date().toISOString() })
-        .eq('id', currentProfile.id);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // ignore offline signout errors
     }
-    await supabase.auth.signOut();
     setCurrentProfile(null);
   };
 
@@ -119,9 +107,9 @@ export default function DashboardPage() {
     );
   }
 
-  // Render Login / SignUp Screen if not authenticated
+  // Render AuthScreen if user profile is not active
   if (!currentProfile) {
-    return <AuthScreen onSuccess={fetchSessionAndData} />;
+    return <AuthScreen onSuccess={(prof) => fetchSessionAndData(prof)} />;
   }
 
   const isAdmin = currentProfile.role === 'admin';
@@ -377,7 +365,7 @@ export default function DashboardPage() {
       <AddCallModal
         isOpen={isAddCallOpen}
         onClose={() => setIsAddCallOpen(false)}
-        onSuccess={fetchSessionAndData}
+        onSuccess={() => fetchSessionAndData()}
         myLeads={leads}
         agentId={currentProfile.id}
       />
