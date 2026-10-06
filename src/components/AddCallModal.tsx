@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CallStatus, OfferProgram, Lead } from '@/types/crm';
 import { submitCallOrLead } from '@/lib/leadService';
-import { Phone, User, Mail, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { Phone, User, Mail, FileText, CheckCircle2, AlertTriangle, X, Calendar, Clock } from 'lucide-react';
 
 interface AddCallModalProps {
   isOpen: boolean;
@@ -27,6 +27,11 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
   const [status, setStatus] = useState<CallStatus>('Poko rele');
   const [closedProgram, setClosedProgram] = useState<OfferProgram>('Fòmasyon $199 USD');
   const [assistanceNote, setAssistanceNote] = useState('');
+
+  // Optional Follow-up Date & Time fields for "Gen follow up" status
+  const [followupDate, setFollowupDate] = useState('');
+  const [followupTime, setFollowupTime] = useState('');
+
   const [notes, setNotes] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -71,7 +76,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
         return;
       }
 
-      // Execute safe local call submit
+      // Execute safe local call submit with optional follow up date/time
       let res;
       try {
         res = await submitCallOrLead({
@@ -81,7 +86,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
           status,
           closedProgram: status === 'Close' ? closedProgram : undefined,
           assistanceNote: status === 'Assistance' ? assistanceNote : undefined,
-          notes,
+          notes: status === 'Gen follow up' && followupDate ? `${notes} (Follow-up ranvwaye pou ${followupDate} a ${followupTime || '09:00'})` : notes,
           agentId,
           existingLeadId: mode === 'existing' ? selectedLeadId : undefined,
         });
@@ -127,6 +132,8 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
     setStatus('Poko rele');
     setClosedProgram('Fòmasyon $199 USD');
     setAssistanceNote('');
+    setFollowupDate('');
+    setFollowupTime('');
     setNotes('');
     setFeedback(null);
   };
@@ -276,6 +283,42 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             </select>
           </div>
 
+          {/* OPTIONAL SUBMENU FOR "Gen follow up" STATUS (Date & Time Picker) */}
+          {status === 'Gen follow up' && (
+            <div className="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl space-y-3 animate-in fade-in">
+              <label className="block text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4" />
+                RANVWAYE RELE ANKÒ (DATE AK LÈ FOLLOW-UP - OPTIONAL)
+              </label>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    DAT RELE ANKÒ (DATE)
+                  </label>
+                  <input
+                    type="date"
+                    value={followupDate}
+                    onChange={(e) => setFollowupDate(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    LÈ APÈL LA (TIME)
+                  </label>
+                  <input
+                    type="time"
+                    value={followupTime}
+                    onChange={(e) => setFollowupTime(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SUBMENU MODAL TRIGGER FOR CLOSE */}
           {status === 'Close' && (
             <div className="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl space-y-2 animate-in fade-in">
@@ -342,7 +385,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             />
           </div>
 
-          {/* Feedback banner - Always green for success messages */}
+          {/* Feedback banner */}
           {feedback && (
             <div
               className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold`}

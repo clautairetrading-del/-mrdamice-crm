@@ -7,18 +7,19 @@ import { AddCallModal } from '@/components/AddCallModal';
 import { AddLeadModal } from '@/components/AddLeadModal';
 import { ImportCSVModal } from '@/components/ImportCSVModal';
 import { HistoryLogModal } from '@/components/HistoryLogModal';
+import { CalendarView } from '@/components/CalendarView';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar } from 'lucide-react';
 
 const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'admin'>('dashboard');
 
   // Modal States
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
@@ -224,6 +225,19 @@ export default function DashboardPage() {
               Lis Leads Mwen ({leads.length})
             </button>
 
+            {/* NEW CALENDAR MENU BUTTON */}
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'calendar'
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Calendar className="w-5 h-5" />
+              Kalandriye Follow-Up
+            </button>
+
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('admin')}
@@ -275,6 +289,7 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">
               {activeTab === 'dashboard' && 'Dashboard Pèfòmans'}
               {activeTab === 'leads' && 'Jesyion Leads ak Apèl yo'}
+              {activeTab === 'calendar' && 'Kalandriye Follow-Up Apèl yo'}
               {activeTab === 'admin' && 'Rapò Global pou Admin'}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
@@ -444,7 +459,15 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Tab 3: Admin Global View */}
+        {/* Tab 3: Calendar View */}
+        {activeTab === 'calendar' && (
+          <CalendarView
+            leads={leads}
+            onSelectLead={(lead) => openCallForLead(lead)}
+          />
+        )}
+
+        {/* Tab 4: Admin Global View */}
         {activeTab === 'admin' && isAdmin && (
           <AdminDashboardView
             onlineAgents={allProfiles.filter((p) => p.is_online)}

@@ -31,6 +31,8 @@ export interface Lead {
   assigned_to?: string;
   created_by?: string;
   current_status: CallStatus;
+  followup_date?: string;
+  followup_time?: string;
   last_call_at?: string;
   created_at: string;
   updated_at: string;
@@ -45,6 +47,8 @@ export interface Call {
   status: CallStatus;
   closed_program?: OfferProgram;
   assistance_note?: string;
+  followup_date?: string;
+  followup_time?: string;
   notes?: string;
   created_at: string;
   // Optional relations
