@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { normalizePhoneNumber } from '@/lib/leadService';
 import { User, Phone, Mail, X, UserPlus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface AddLeadModalProps {
@@ -28,9 +29,9 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
     setLoading(true);
     setFeedback(null);
 
-    const cleanPhone = phone.trim();
+    const formattedPhone = phone.trim();
 
-    if (!cleanPhone) {
+    if (!formattedPhone) {
       setFeedback({ type: 'error', msg: 'Tanpri antre yon nimewo telefòn valid.' });
       setLoading(false);
       return;
@@ -41,7 +42,7 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
       const newLeadObj = {
         id: newLeadId,
         full_name: fullName.trim() || 'Lead San Non',
-        phone: cleanPhone,
+        phone: formattedPhone, // Supports international formats like +1 (111) 111 1111
         email: email ? email.trim() : null,
         assigned_to: agentId,
         created_by: agentId,
@@ -50,16 +51,21 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
         updated_at: new Date().toISOString(),
       };
 
-      // 1. Always persist in localStorage so refreshing the browser NEVER loses created leads
+      // 1. Always persist in localStorage with smart international phone duplicate check
       try {
         const stored = localStorage.getItem(LOCAL_LEADS_KEY);
         const existingList = stored ? JSON.parse(stored) : [];
-        const isDuplicate = existingList.some((l: any) => l.phone === cleanPhone);
+
+        const normalizedInput = normalizePhoneNumber(formattedPhone);
+
+        const isDuplicate = existingList.some(
+          (l: any) => normalizePhoneNumber(l.phone) === normalizedInput || l.phone === formattedPhone
+        );
 
         if (isDuplicate) {
           setFeedback({
             type: 'warning',
-            msg: `Nimewo telefòn sa a (${cleanPhone}) te deja egziste nan lis ou a!`,
+            msg: `Nimewo telefòn sa a (${formattedPhone}) te deja egziste nan sistèm nan!`,
           });
           setLoading(false);
           return;
@@ -78,7 +84,7 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
           lead_id: newLeadId,
           agent_id: agentId,
           action_type: 'MANUAL_LEAD_CREATED',
-          comment: `Nouvo lead kreye avèk siksè pa ajan an.`,
+          comment: `Nouvo lead kreye avèk siksè ak telefòn entènasyonal: ${formattedPhone}`,
         });
       } catch (e) {
         console.warn('Supabase insert fallback:', e);
@@ -86,7 +92,7 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
 
       setFeedback({
         type: 'success',
-        msg: 'Nouvo lead la kreye epi sovgarde nan sistèm nan avèk siksè!',
+        msg: 'Nouvo lead la kreye ak nimewo entènasyonal li sovgarde avèk siksè!',
       });
 
       setTimeout(() => {
@@ -152,19 +158,22 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
-              NIMUÈWO TELEFÒN (PHONE - PREVANSYON DOUBLON) *
+              NIMUÈWO TELEFÒN ENTÈNASYONAL (USA / INT'L FORMAT) *
             </label>
             <div className="relative">
               <Phone className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 required
-                placeholder="ex: +50937000000"
+                placeholder="ex: +1 (111) 111 1111 oswa 37000000"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500 font-mono"
               />
             </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              Sistèm nan aksepte tout fòma nimewo USA ak Entènasyonal (ek: +1 (111) 111 1111, +50937000000...)
+            </p>
           </div>
 
           <div>
@@ -188,7 +197,7 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
             <div
               className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 ${
                 feedback.type === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold'
                   : feedback.type === 'warning'
                   ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                   : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'

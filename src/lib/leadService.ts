@@ -12,6 +12,23 @@ const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
 const LOCAL_CALLS_KEY = 'mrdamice_crm_local_calls';
 const LOCAL_LOGS_KEY = 'mrdamice_crm_local_logs';
 
+/**
+ * Normalizes international phone formats (e.g., +1 (111) 111 1111 -> +11111111111)
+ * while preserving display string for duplicates checking
+ */
+export function normalizePhoneNumber(phone: string): string {
+  if (!phone) return '';
+  // Remove spaces, parentheses, dashes, and non-digit characters except leading +
+  const clean = phone.replace(/[^0-9+]/g, '');
+  if (clean.startsWith('+')) return clean;
+  // If standard 10 digit US number, prepend +1
+  const digitsOnly = clean.replace(/\D/g, '');
+  if (digitsOnly.length === 10) {
+    return `+1${digitsOnly}`;
+  }
+  return `+${digitsOnly}`;
+}
+
 export async function submitCallOrLead(params: {
   phone: string;
   fullName?: string;
@@ -23,17 +40,24 @@ export async function submitCallOrLead(params: {
   agentId: string;
   existingLeadId?: string;
 }): Promise<AddCallResult> {
-  const cleanPhone = params.phone.trim();
+  const formattedDisplayPhone = params.phone.trim();
+  const normalizedPhone = normalizePhoneNumber(params.phone);
+
   let isDuplicate = false;
   let targetLeadName = params.fullName || 'Lead San Non';
   let leadId = params.existingLeadId || `lead-${Date.now()}`;
 
-  // 1. Local Storage Fallback Persistence (Prevents Network & Invalid Path Errors)
+  // 1. Local Storage Fallback Persistence (Supports all international formats: +1 (111) 111 1111)
   try {
     const storedLeads = localStorage.getItem(LOCAL_LEADS_KEY);
     const leadsList = storedLeads ? JSON.parse(storedLeads) : [];
 
-    const existingLead = leadsList.find((l: any) => l.phone === cleanPhone || (params.existingLeadId && l.id === params.existingLeadId));
+    const existingLead = leadsList.find((l: any) => {
+      const matchNormalized = normalizePhoneNumber(l.phone) === normalizedPhone;
+      const matchRaw = l.phone === formattedDisplayPhone;
+      const matchId = params.existingLeadId && l.id === params.existingLeadId;
+      return matchNormalized || matchRaw || matchId;
+    });
 
     if (existingLead) {
       isDuplicate = true;
@@ -47,7 +71,7 @@ export async function submitCallOrLead(params: {
       const newLeadObj = {
         id: leadId,
         full_name: targetLeadName,
-        phone: cleanPhone,
+        phone: formattedDisplayPhone, // Keep original formatted string for display
         email: params.email || null,
         assigned_to: params.agentId,
         created_by: params.agentId,
@@ -111,7 +135,7 @@ export async function submitCallOrLead(params: {
       await supabase.from('leads').upsert({
         id: leadId,
         full_name: targetLeadName,
-        phone: cleanPhone,
+        phone: formattedDisplayPhone,
         email: params.email || null,
         assigned_to: params.agentId,
         created_by: params.agentId,
@@ -146,7 +170,7 @@ export async function submitCallOrLead(params: {
     isDuplicate,
     leadId,
     message: isDuplicate
-      ? `Estati apèl la mete ajou avèk siksè sou lead: ${targetLeadName}!`
+      ? `Estati apèl la mete ajou avèk siksè pou lead: ${targetLeadName}!`
       : `Apèl la ak nouvo lead la sovgarde avèk siksè!`,
   };
 }
