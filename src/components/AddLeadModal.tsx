@@ -11,6 +11,8 @@ interface AddLeadModalProps {
   agentId: string;
 }
 
+const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
+
 export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadModalProps) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -35,75 +37,63 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
     }
 
     try {
-      // 1. Try checking duplicate with graceful fallback
-      let isDuplicate = false;
-      let duplicateLeadName = '';
+      const newLeadId = `lead-${Date.now()}`;
+      const newLeadObj = {
+        id: newLeadId,
+        full_name: fullName.trim() || 'Lead San Non',
+        phone: cleanPhone,
+        email: email ? email.trim() : null,
+        assigned_to: agentId,
+        created_by: agentId,
+        current_status: 'Poko rele',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
+      // 1. Always persist in localStorage so refreshing the browser NEVER loses created leads
       try {
-        const { data: existing } = await supabase
-          .from('leads')
-          .select('id, full_name')
-          .eq('phone', cleanPhone)
-          .maybeSingle();
+        const stored = localStorage.getItem(LOCAL_LEADS_KEY);
+        const existingList = stored ? JSON.parse(stored) : [];
+        const isDuplicate = existingList.some((l: any) => l.phone === cleanPhone);
 
-        if (existing) {
-          isDuplicate = true;
-          duplicateLeadName = existing.full_name;
-
-          await supabase.from('history_logs').insert({
-            lead_id: existing.id,
-            agent_id: agentId,
-            action_type: 'MANUAL_ADD_DUPLICATE',
-            comment: `Ajan an te kòmande yon tentativ kreyasyon pou nimewo sa a ki te deja nan sistèm nan.`,
+        if (isDuplicate) {
+          setFeedback({
+            type: 'warning',
+            msg: `Nimewo telefòn sa a (${cleanPhone}) te deja egziste nan lis ou a!`,
           });
+          setLoading(false);
+          return;
         }
+
+        existingList.unshift(newLeadObj);
+        localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(existingList));
+      } catch (err) {
+        console.warn('LocalStorage save notice:', err);
+      }
+
+      // 2. Try saving into Supabase as well
+      try {
+        await supabase.from('leads').insert(newLeadObj);
+        await supabase.from('history_logs').insert({
+          lead_id: newLeadId,
+          agent_id: agentId,
+          action_type: 'MANUAL_LEAD_CREATED',
+          comment: `Nouvo lead kreye avèk siksè pa ajan an.`,
+        });
       } catch (e) {
-        console.warn('Duplicate check warning:', e);
+        console.warn('Supabase insert fallback:', e);
       }
 
-      if (isDuplicate) {
-        setFeedback({
-          type: 'warning',
-          msg: `Nimewo sa a te deja egziste sou lead: ${duplicateLeadName}! Nou sovgarde tentativ la nan istorik log.`,
-        });
-      } else {
-        const newLeadId = `lead-${Date.now()}`;
-        const newLeadObj = {
-          id: newLeadId,
-          full_name: fullName.trim() || 'Lead San Non',
-          phone: cleanPhone,
-          email: email ? email.trim() : null,
-          assigned_to: agentId,
-          created_by: agentId,
-          current_status: 'Poko rele',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+      setFeedback({
+        type: 'success',
+        msg: 'Nouvo lead la kreye epi sovgarde nan sistèm nan avèk siksè!',
+      });
 
-        // Try inserting into Supabase
-        try {
-          await supabase.from('leads').insert(newLeadObj);
-          await supabase.from('history_logs').insert({
-            lead_id: newLeadId,
-            agent_id: agentId,
-            action_type: 'MANUAL_LEAD_CREATED',
-            comment: `Nouvo lead kreye avèk siksè pa ajan an.`,
-          });
-        } catch (e) {
-          console.warn('Supabase insert fallback:', e);
-        }
-
-        setFeedback({
-          type: 'success',
-          msg: 'Nouvo lead la kreye avèk siksè epi lye ak kont ou!',
-        });
-
-        setTimeout(() => {
-          onSuccess(newLeadObj);
-          onClose();
-          resetForm();
-        }, 1200);
-      }
+      setTimeout(() => {
+        onSuccess(newLeadObj);
+        onClose();
+        resetForm();
+      }, 1000);
     } catch (err: any) {
       setFeedback({
         type: 'error',

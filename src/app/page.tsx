@@ -13,6 +13,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
 import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus } from 'lucide-react';
 
+const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
+
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,13 +76,33 @@ export default function DashboardPage() {
       setAllProfiles([activeUser]);
     }
 
+    let fetchedLeads: Lead[] = [];
+
     const { data: leadsData } = await supabase
       .from('leads')
       .select('*, assigned_agent:profiles!assigned_to(*)');
     
     if (leadsData && leadsData.length > 0) {
-      setLeads(leadsData);
+      fetchedLeads = leadsData;
     }
+
+    // Merge persistent local leads so refreshing browser NEVER clears newly added leads
+    try {
+      const stored = localStorage.getItem(LOCAL_LEADS_KEY);
+      if (stored) {
+        const localList: Lead[] = JSON.parse(stored);
+        const existingPhones = new Set(fetchedLeads.map((l) => l.phone));
+        localList.forEach((l) => {
+          if (!existingPhones.has(l.phone)) {
+            fetchedLeads.unshift(l);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('LocalStorage load notice:', e);
+    }
+
+    setLeads(fetchedLeads);
 
     const { data: callsData } = await supabase.from('calls').select('*');
     if (callsData) setCalls(callsData);
