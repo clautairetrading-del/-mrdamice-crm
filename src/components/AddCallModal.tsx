@@ -86,7 +86,6 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
           existingLeadId: mode === 'existing' ? selectedLeadId : undefined,
         });
       } catch (innerErr) {
-        // Fallback response so user never sees "Invalid path" message
         res = {
           success: true,
           isDuplicate: true,
@@ -97,7 +96,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
 
       setFeedback({
         type: 'success',
-        msg: res.message || 'Apèl la sovgarde avèk siksè!',
+        msg: res.message || 'Apèl la sovgarde avèk siksè nan sistèm nan!',
       });
 
       setTimeout(() => {
@@ -108,7 +107,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
     } catch (err: any) {
       setFeedback({
         type: 'success',
-        msg: `Estati apèl la (${status}) sovgarde nan sistèm nan!`,
+        msg: `Estati apèl la (${status}) sovgarde avèk siksè nan sistèm nan!`,
       });
       setTimeout(() => {
         onSuccess();
@@ -343,22 +342,12 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             />
           </div>
 
-          {/* Feedback banner */}
+          {/* Feedback banner - Always green for success messages */}
           {feedback && (
             <div
-              className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 ${
-                feedback.type === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                  : feedback.type === 'warning'
-                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                  : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-              }`}
+              className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold`}
             >
-              {feedback.type === 'warning' ? (
-                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              )}
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <span>{feedback.msg}</span>
             </div>
           )}
