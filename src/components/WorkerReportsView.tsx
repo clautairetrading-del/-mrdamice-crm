@@ -50,19 +50,35 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
   // Combined records logic: total calls or total active leads managed in this period
   const totalCallsCount = Math.max(filteredCalls.length, filteredLeads.length);
 
-  // Closed leads and revenue calculation (combining call records and lead current_status)
-  const closedLeads = filteredLeads.filter((l) => l.current_status === 'Close');
-  const closedCalls = filteredCalls.filter((c) => c.status === 'Close');
-  const totalCloses = Math.max(closedLeads.length, closedCalls.length);
+  // Closed leads and revenue calculation
+  const directCloseCalls = filteredCalls.filter((c) => c.status === 'Close');
+  const assistanceCalls = filteredCalls.filter((c) => c.status === 'Assistance');
 
-  const totalRevenue = closedCalls.reduce((acc, c) => {
+  const directCloseLeads = filteredLeads.filter((l) => l.current_status === 'Close');
+  const assistanceLeads = filteredLeads.filter((l) => l.current_status === 'Assistance');
+
+  const totalDirectCloses = Math.max(directCloseLeads.length, directCloseCalls.length);
+  const totalAssistanceCount = Math.max(assistanceLeads.length, assistanceCalls.length);
+
+  // Revenue calculation for Direct Closes
+  const closeRevenue = directCloseCalls.reduce((acc, c) => {
     if (c.closed_program === 'Done For You $1,000 USD') return acc + 1000;
     if (c.closed_program === 'Fòmasyon $199 USD') return acc + 199;
     return acc + 199;
-  }, closedLeads.length > 0 && closedCalls.length === 0 ? closedLeads.length * 199 : 0);
+  }, directCloseLeads.length > 0 && directCloseCalls.length === 0 ? directCloseLeads.length * 199 : 0);
+
+  // Revenue calculation for Assistance (Live Coaching)
+  const assistanceRevenue = assistanceCalls.reduce((acc, c) => {
+    if (c.closed_program === 'Done For You $1,000 USD') return acc + 1000;
+    if (c.closed_program === 'Fòmasyon $199 USD') return acc + 199;
+    return acc + 199;
+  }, assistanceLeads.length > 0 && assistanceCalls.length === 0 ? assistanceLeads.length * 199 : 0);
+
+  // Total Enterprise Revenue (Close Revenue + Assistance Revenue)
+  const totalEnterpriseRevenue = closeRevenue + assistanceRevenue;
+  const totalCloses = totalDirectCloses + totalAssistanceCount;
 
   const followUpCount = filteredLeads.filter((l) => l.current_status === 'Gen follow up').length || filteredCalls.filter((c) => c.status === 'Gen follow up').length;
-  const assistanceCount = filteredLeads.filter((l) => l.current_status === 'Assistance').length || filteredCalls.filter((c) => c.status === 'Assistance').length;
   const spokenCount = filteredLeads.filter((l) => l.current_status === 'Mwen pale ak li').length || filteredCalls.filter((c) => c.status === 'Mwen pale ak li').length;
 
   const conversionRate = totalCallsCount > 0 ? ((totalCloses / totalCallsCount) * 100).toFixed(1) : '0';
@@ -131,10 +147,10 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
             .brand { font-size: 22px; font-weight: 900; color: #111827; }
             .brand span { color: #f59e0b; }
             .meta { text-align: right; font-size: 12px; color: #4b5563; }
-            .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+            .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
             .metric-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 15px; text-align: center; }
             .metric-title { font-size: 10px; font-weight: bold; color: #6b7280; text-transform: uppercase; }
-            .metric-val { font-size: 24px; font-weight: 900; color: #d97706; margin-top: 5px; }
+            .metric-val { font-size: 22px; font-weight: 900; color: #d97706; margin-top: 5px; }
             table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
             th { background: #f3f4f6; padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 11px; text-transform: uppercase; color: #374151; }
             .footer { margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 15px; font-size: 10px; color: #9ca3af; display: flex; justify-content: space-between; }
@@ -155,20 +171,19 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
 
           <div class="metrics-grid">
             <div class="metric-card">
-              <div class="metric-title">Total Apèl / Leads</div>
-              <div class="metric-val">${totalCallsCount}</div>
+              <div class="metric-title">REVENU CLOSES TÈT DWAT</div>
+              <div class="metric-val" style="color: #059669;">$${closeRevenue.toLocaleString()} USD</div>
+              <div style="font-size: 10px; color: #6b7280; margin-top: 3px;">(${totalDirectCloses} lavant dirèk)</div>
             </div>
             <div class="metric-card">
-              <div class="metric-title">Ventes (Closes)</div>
-              <div class="metric-val" style="color: #059669;">${totalCloses}</div>
+              <div class="metric-title">REVENU ASISTANS (SIPÒ/LIVE)</div>
+              <div class="metric-val" style="color: #2563eb;">$${assistanceRevenue.toLocaleString()} USD</div>
+              <div style="font-size: 10px; color: #6b7280; margin-top: 3px;">(${totalAssistanceCount} asistans sipò)</div>
             </div>
-            <div class="metric-card">
-              <div class="metric-title">Chiffre d'Affaires</div>
-              <div class="metric-val" style="color: #2563eb;">$${totalRevenue.toLocaleString()} USD</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-title">Conversion Rate</div>
-              <div class="metric-val" style="color: #7c3aed;">${conversionRate}%</div>
+            <div class="metric-card" style="background: #fffbe6; border-color: #f59e0b;">
+              <div class="metric-title" style="color: #b45309;">TOTAL REVENU ANTREPRIZ</div>
+              <div class="metric-val" style="color: #d97706;">$${totalEnterpriseRevenue.toLocaleString()} USD</div>
+              <div style="font-size: 10px; color: #b45309; margin-top: 3px;">(Total rantre pou biznis la)</div>
             </div>
           </div>
 
@@ -293,42 +308,42 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
         </div>
 
         {/* Metric Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           
-          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">TOUT APÈL YO (TOTAL)</span>
-              <PhoneCall className="w-5 h-5 text-amber-600" />
-            </div>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{totalCallsCount}</p>
-            <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium mt-1">Apèl ou pase pandan seri sa</p>
-          </div>
-
+          {/* Direct Close Revenue Card */}
           <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase">KANTITE CLOSES (VENTES)</span>
+              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase">REVENU CLOSES TÈT DWAT</span>
               <Award className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{totalCloses}</p>
-            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-1">Total lavant ki konfime</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">${closeRevenue.toLocaleString()} USD</p>
+            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-1">
+              {totalDirectCloses} lavant rantre pa apèl dirèk
+            </p>
           </div>
 
+          {/* Assistance Revenue Card */}
           <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-5 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase">CHIFFRE D'AFFAIRES (USD)</span>
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <span className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase">REVENU ASISTANS (LIVE COACHING)</span>
+              <FileText className="w-5 h-5 text-blue-600" />
             </div>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">${totalRevenue.toLocaleString()} USD</p>
-            <p className="text-[11px] text-blue-700 dark:text-blue-400 font-medium mt-1">Revenu ou anplwaye bay biznis la</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">${assistanceRevenue.toLocaleString()} USD</p>
+            <p className="text-[11px] text-blue-700 dark:text-blue-400 font-medium mt-1">
+              {totalAssistanceCount} asistans/sipò ki konfime
+            </p>
           </div>
 
-          <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 p-5 rounded-2xl">
+          {/* Total Enterprise Revenue Card */}
+          <div className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-500/80 p-5 rounded-2xl shadow-md">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-purple-800 dark:text-purple-400 uppercase">TAUX DE CONVERSION</span>
-              <CheckCircle2 className="w-5 h-5 text-purple-600" />
+              <span className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wide">TOTAL REVENU ANTREPRIZ</span>
+              <TrendingUp className="w-5 h-5 text-amber-600" />
             </div>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{conversionRate}%</p>
-            <p className="text-[11px] text-purple-700 dark:text-purple-400 font-medium mt-1">Pousantaj lavant sou tout apèl</p>
+            <p className="text-3xl font-black text-amber-700 dark:text-amber-400">${totalEnterpriseRevenue.toLocaleString()} USD</p>
+            <p className="text-[11px] text-amber-800 dark:text-amber-300 font-semibold mt-1">
+              Total rantre anplwaye a bay konpayi an
+            </p>
           </div>
 
         </div>
@@ -341,16 +356,16 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
-              <p className="text-xs font-semibold text-gray-500">Close (Fòmasyon $199 & $1k)</p>
-              <p className="text-xl font-bold text-amber-600 mt-1">{totalCloses}</p>
+              <p className="text-xs font-semibold text-gray-500">Closes Tèt Dwat</p>
+              <p className="text-xl font-bold text-amber-600 mt-1">{totalDirectCloses}</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+              <p className="text-xs font-semibold text-gray-500">Asistans Sipò (Coaching)</p>
+              <p className="text-xl font-bold text-blue-600 mt-1">{totalAssistanceCount}</p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <p className="text-xs font-semibold text-gray-500">Gen Follow-up Ranvwaye</p>
-              <p className="text-xl font-bold text-blue-600 mt-1">{followUpCount}</p>
-            </div>
-            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
-              <p className="text-xs font-semibold text-gray-500">Asistans / Sipò Bay</p>
-              <p className="text-xl font-bold text-emerald-600 mt-1">{assistanceCount}</p>
+              <p className="text-xl font-bold text-emerald-600 mt-1">{followUpCount}</p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <p className="text-xs font-semibold text-gray-500">Mwen pale ak li</p>
