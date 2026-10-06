@@ -241,7 +241,7 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
                   <th className="p-3">Moun/Lead</th>
                   <th className="p-3">Nimewo Telefòn</th>
                   <th className="p-3">Estati Apèl</th>
-                  <th className="p-3 text-right">pwogram/Nòt</th>
+                  <th className="p-3 text-right">Imèl / Pwogram / Nòt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
