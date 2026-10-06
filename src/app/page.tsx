@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Profile, Lead, Call, HistoryLog } from '@/types/crm';
 import { AddCallModal } from '@/components/AddCallModal';
+import { AddLeadModal } from '@/components/AddLeadModal';
 import { ImportCSVModal } from '@/components/ImportCSVModal';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { HistoryLogViewer } from '@/components/HistoryLogViewer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -19,6 +20,7 @@ export default function DashboardPage() {
 
   // Modal States
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
+  const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
   const [isImportCSVOpen, setIsImportCSVOpen] = useState(false);
   const [selectedLeadForLogs, setSelectedLeadForLogs] = useState<Lead | null>(null);
   const [selectedLeadForCall, setSelectedLeadForCall] = useState<Lead | null>(null);
@@ -242,7 +244,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Header Controls: Theme Toggle & Add Call CTA */}
+          {/* Header Controls: Theme Toggle & Actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
 
@@ -298,8 +300,8 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Action Buttons for Leads Menu */}
-              <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+              {/* Action Buttons inside Lis Leads Mwen */}
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
                 
                 {/* Status Filter Dropdown */}
                 <select
@@ -317,13 +319,22 @@ export default function DashboardPage() {
                   <option value="Assistance">Assistance</option>
                 </select>
 
-                {/* Import CSV Button placed directly inside "Lis Leads Mwen" menu */}
+                {/* Import CSV Button */}
                 <button
                   onClick={() => setIsImportCSVOpen(true)}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold transition-all text-xs shadow-md shadow-amber-500/20"
+                  className="flex items-center gap-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3.5 py-2 rounded-xl font-bold transition-all text-xs border border-gray-300 dark:border-gray-600 shadow-sm"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Enpòte Fichye CSV
+                  <FileSpreadsheet className="w-4 h-4 text-amber-500" />
+                  Enpòte CSV
+                </button>
+
+                {/* Add New Lead Button */}
+                <button
+                  onClick={() => setIsAddLeadOpen(true)}
+                  className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold transition-all text-xs shadow-md shadow-amber-500/20"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Ajoute Nouvo Lead
                 </button>
               </div>
 
@@ -438,6 +449,14 @@ export default function DashboardPage() {
         }}
         onSuccess={() => fetchSessionAndData()}
         myLeads={leads}
+        agentId={currentProfile.id}
+      />
+
+      {/* Add Lead Modal (Direct Manual Entry) */}
+      <AddLeadModal
+        isOpen={isAddLeadOpen}
+        onClose={() => setIsAddLeadOpen(false)}
+        onSuccess={() => fetchSessionAndData()}
         agentId={currentProfile.id}
       />
 
