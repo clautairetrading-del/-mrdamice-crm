@@ -404,18 +404,37 @@ export default function DashboardPage() {
 
           {/* Nav Links */}
           <nav className="space-y-2">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                activeTab === 'dashboard'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              Dashboard
-            </button>
+            {/* ADMIN ONLY MENU ITEM */}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === 'admin'
+                    ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Shield className="w-5 h-5" />
+                Panèl Kontwòl Admin
+              </button>
+            )}
 
+            {/* WORKER ONLY DASHBOARD */}
+            {!isAdmin && (
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                Dashboard Pèfòmans
+              </button>
+            )}
+
+            {/* SHARED: LEADS LIST (ALL LEADS FOR ADMIN, MY LEADS FOR WORKER) */}
             <button
               onClick={() => setActiveTab('leads')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
@@ -425,10 +444,10 @@ export default function DashboardPage() {
               }`}
             >
               <Users className="w-5 h-5" />
-              Lis Leads Mwen ({leads.length})
+              {isAdmin ? `Tout Leads Yo (${leads.length})` : `Lis Leads Mwen (${leads.length})`}
             </button>
 
-            {/* NEW CALENDAR MENU BUTTON */}
+            {/* SHARED: CALENDAR */}
             <button
               onClick={() => setActiveTab('calendar')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
@@ -441,30 +460,18 @@ export default function DashboardPage() {
               Kalandriye Follow-Up
             </button>
 
-            {/* NEW REPORTS & PERFORMANCE MENU BUTTON */}
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                activeTab === 'reports'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <FileText className="w-5 h-5" />
-              Rapò & Pèfòmans PDF
-            </button>
-
-            {isAdmin && (
+            {/* WORKER ONLY REPORTS PDF */}
+            {!isAdmin && (
               <button
-                onClick={() => setActiveTab('admin')}
+                onClick={() => setActiveTab('reports')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'admin'
-                    ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                  activeTab === 'reports'
+                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                <Shield className="w-5 h-5" />
-                Aksè Admin Global
+                <FileText className="w-5 h-5" />
+                Rapò & Pèfòmans PDF
               </button>
             )}
           </nav>
