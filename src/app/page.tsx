@@ -774,11 +774,11 @@ export default function DashboardPage() {
 
                         const creatorName = creatorProfile?.full_name 
                           ? creatorProfile.full_name 
-                          : (isAdmin ? 'Ajan Worker' : currentProfile.full_name);
+                          : (lead.created_by ? lead.created_by : (lead.email ? lead.email.split('@')[0] : 'User Test'));
 
                         const assignedName = assignedProfile?.full_name 
                           ? assignedProfile.full_name 
-                          : (isAdmin ? 'Ajan Worker' : currentProfile.full_name);
+                          : (lead.assigned_to ? lead.assigned_to : (lead.email ? lead.email.split('@')[0] : 'User Test'));
 
                         return (
                           <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
