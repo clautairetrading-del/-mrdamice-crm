@@ -750,8 +750,18 @@ export default function DashboardPage() {
                       </tr>
                     ) : (
                       filteredLeads.map((lead) => {
-                        const creatorProfile = allProfiles.find((p) => p.id === lead.created_by) || lead.assigned_agent;
-                        const assignedProfile = lead.assigned_agent || allProfiles.find((p) => p.id === lead.assigned_to);
+                        const creatorProfile = allProfiles.find((p) => p.id === lead.created_by || p.id === lead.assigned_to) 
+                          || lead.assigned_agent;
+                        const assignedProfile = allProfiles.find((p) => p.id === lead.assigned_to) 
+                          || lead.assigned_agent;
+
+                        const creatorName = creatorProfile?.full_name 
+                          ? creatorProfile.full_name 
+                          : (lead.created_by ? `Worker (${lead.created_by.slice(0, 8)})` : 'Sistèm / Import');
+
+                        const assignedName = assignedProfile?.full_name 
+                          ? assignedProfile.full_name 
+                          : (lead.assigned_to ? `Ajan (${lead.assigned_to.slice(0, 8)})` : 'San Ajan');
 
                         return (
                           <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
@@ -771,11 +781,11 @@ export default function DashboardPage() {
                             </td>
                             <td className="px-5 py-4">
                               <span className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/60 text-gray-800 dark:text-gray-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-600">
-                                👤 {creatorProfile?.full_name || 'Ajan Worker'}
+                                👤 {creatorName}
                               </span>
                             </td>
                             <td className="px-5 py-4 text-gray-600 dark:text-gray-300 text-xs font-medium">
-                              {assignedProfile?.full_name || currentProfile.full_name}
+                              {assignedName}
                             </td>
                             <td className="px-5 py-4 text-gray-500 dark:text-gray-400 text-xs font-mono">
                               {lead.created_at ? lead.created_at.split('T')[0] : 'Jodi a'}
