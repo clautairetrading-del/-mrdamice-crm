@@ -205,3 +205,15 @@ DROP POLICY IF EXISTS "Workers can insert history logs" ON public.history_logs;
 CREATE POLICY "Workers can insert history logs"
   ON public.history_logs FOR INSERT
   WITH CHECK (agent_id = auth.uid());
+
+
+-- ==========================================
+-- SEED TEST ACCOUNTS FOR ADMIN & WORKER
+-- ==========================================
+
+-- 1. Insert Admin Test Profile & Auth (Note: Password hash must be created via Auth API or SQL extension if enabled)
+-- Note: Replace UUIDs if needed or let Supabase Auth manage user creation.
+-- The trigger `on_auth_user_created` will automatically create profiles when users register via AuthScreen!
+
+-- Example SQL snippet to grant admin role manually if an account already registered:
+-- UPDATE public.profiles SET role = 'admin' WHERE email = 'Admintest@damice.com';

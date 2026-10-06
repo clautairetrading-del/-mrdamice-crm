@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Lock, Mail, User, Shield, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, Mail, User, Shield, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { UserRole } from '@/types/crm';
 
 interface AuthModalProps {
@@ -18,11 +18,13 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     try {
       if (isSignUp) {
@@ -50,6 +52,9 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
             is_online: true,
           });
         }
+
+        setSuccessMsg('Kont la kreye avèk siksè! Kounya ou ka konekte.');
+        setIsSignUp(false);
       } else {
         // Sign In with Email & Password
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -66,14 +71,22 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
             .update({ is_online: true, last_seen_at: new Date().toISOString() })
             .eq('id', data.user.id);
         }
-      }
 
-      onSuccess();
+        onSuccess();
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Erè nan otantifikasyon an.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillTestCredentials = (testEmail: string, testPass: string, testName: string, testRole: UserRole) => {
+    setEmail(testEmail);
+    setPassword(testPass);
+    setFullName(testName);
+    setRole(testRole);
+    setErrorMsg(null);
   };
 
   return (
@@ -89,6 +102,37 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isSignUp ? 'Kreye yon kont nouvo nan sistèm nan' : 'Konekte ak Imèl ak Modpas ou pou w rantre nan CRM an'}
           </p>
+        </div>
+
+        {/* Quick Test Login Credentials Helper */}
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3 space-y-2">
+          <p className="text-xs font-bold text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-amber-500" />
+            KONEKSYON SOU PWOJÈ A (TEST ACCOUNTS)
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => fillTestCredentials('Admintest@damice.com', 'Admin@1234', 'Mr Damice Admin', 'admin')}
+              className="p-2 bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-700/80 rounded-lg text-left hover:border-amber-500 transition-colors"
+            >
+              <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                <Shield className="w-3 h-3 text-amber-500" /> Admin Test
+              </div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">Admintest@damice.com</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fillTestCredentials('Usertest@damice.com', 'User@1234', 'Ajan Worker Test', 'worker')}
+              className="p-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-left hover:border-amber-500 transition-colors"
+            >
+              <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                <User className="w-3 h-3 text-amber-500" /> User Test
+              </div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">Usertest@damice.com</div>
+            </button>
+          </div>
         </div>
 
         {/* Form */}
@@ -188,6 +232,13 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
             </div>
           )}
 
+          {successMsg && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -197,7 +248,7 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
               'Ap verifye...'
             ) : (
               <>
-                {isSignUp ? 'Kreye Kont' : 'Konekte nan CRM'}
+                {isSignUp ? 'Kreye Kont Sa A' : 'Konekte nan CRM'}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -211,12 +262,13 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
             onClick={() => {
               setIsSignUp(!isSignUp);
               setErrorMsg(null);
+              setSuccessMsg(null);
             }}
             className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold"
           >
             {isSignUp
               ? 'Ou gen kont deja? Konekte sou kont ou'
-              : 'Ou se yon nouvo ajan? Kreye yon kont isit la'}
+              : 'Premye fwa? Klike isit la pou w Kreye yon Kont Nouvo'}
           </button>
         </div>
 
