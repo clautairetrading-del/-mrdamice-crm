@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient';
-import { Lead } from '@/types/crm';
 
 export interface CSVLeadRow {
   full_name?: string;
@@ -54,7 +53,7 @@ export async function importLeadsFromCSV(
         comment: `Ajan an te kòmande yon tentativ enpòtasyon CSV pou nimewo sa a ki te deja nan sistèm nan.`,
       });
     } else {
-      // Create new lead
+      // Create new lead without mandatory call status (defaults to 'Poko rele' or pending)
       const { data: newLead, error } = await supabase
         .from('leads')
         .insert({
@@ -77,7 +76,7 @@ export async function importLeadsFromCSV(
           lead_id: newLead.id,
           agent_id: agentId,
           action_type: 'CSV_IMPORT_CREATED',
-          comment: `Lead te enpòte avèk siksè nan dosye CSV ajan an.`,
+          comment: `Nouvo lead san estati apèl enpòte nan dosye ajan an.`,
         });
       }
     }

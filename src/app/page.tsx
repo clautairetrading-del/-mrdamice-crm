@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
   const [isImportCSVOpen, setIsImportCSVOpen] = useState(false);
   const [selectedLeadForLogs, setSelectedLeadForLogs] = useState<Lead | null>(null);
+  const [selectedLeadForCall, setSelectedLeadForCall] = useState<Lead | null>(null);
 
   // Data States
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -97,6 +98,11 @@ export default function DashboardPage() {
       .eq('lead_id', lead.id)
       .order('created_at', { ascending: false });
     if (data) setHistoryLogs(data);
+  };
+
+  const openCallForLead = (lead: Lead) => {
+    setSelectedLeadForCall(lead);
+    setIsAddCallOpen(true);
   };
 
   if (loading) {
@@ -236,22 +242,16 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Header Controls: Theme Toggle & Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Header Controls: Theme Toggle & Add Call CTA */}
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-
-            {/* Import CSV Button */}
-            <button
-              onClick={() => setIsImportCSVOpen(true)}
-              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 px-4 py-2.5 rounded-xl font-bold transition-all text-sm shadow-sm"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-amber-500" />
-              Enpòte CSV
-            </button>
 
             {/* Add Call Button */}
             <button
-              onClick={() => setIsAddCallOpen(true)}
+              onClick={() => {
+                setSelectedLeadForCall(null);
+                setIsAddCallOpen(true);
+              }}
               className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-amber-500/20 transition-all text-sm"
             >
               <Plus className="w-5 h-5" />
@@ -283,8 +283,8 @@ export default function DashboardPage() {
         {activeTab === 'leads' && (
           <div className="space-y-6">
             
-            {/* Header & Controls bar for Leads */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Header & Controls bar for Leads menu */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-200 dark:border-gray-700/80">
               
               {/* Search Bar */}
               <div className="relative w-full sm:max-w-md">
@@ -294,17 +294,18 @@ export default function DashboardPage() {
                   placeholder="Fè rechèch pa non, imèl oswa telefòn..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
                 />
               </div>
 
-              {/* Status Filter Dropdown */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 shrink-0">Filtre pa Estati:</label>
+              {/* Action Buttons for Leads Menu */}
+              <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+                
+                {/* Status Filter Dropdown */}
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 shadow-sm"
                 >
                   <option value="all">Tout Estati yo</option>
                   <option value="Poko rele">Poko rele</option>
@@ -315,6 +316,15 @@ export default function DashboardPage() {
                   <option value="Close">Close</option>
                   <option value="Assistance">Assistance</option>
                 </select>
+
+                {/* Import CSV Button placed directly inside "Lis Leads Mwen" menu */}
+                <button
+                  onClick={() => setIsImportCSVOpen(true)}
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold transition-all text-xs shadow-md shadow-amber-500/20"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Enpòte Fichye CSV
+                </button>
               </div>
 
             </div>
@@ -348,7 +358,11 @@ export default function DashboardPage() {
                           </td>
                           <td className="px-6 py-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">{lead.phone}</td>
                           <td className="px-6 py-4">
-                            <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-3 py-1 rounded-full text-xs font-semibold">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              lead.current_status === 'Poko rele' 
+                                ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
+                            }`}>
                               {lead.current_status}
                             </span>
                           </td>
@@ -357,11 +371,11 @@ export default function DashboardPage() {
                           </td>
                           <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                             <button
-                              onClick={() => setIsAddCallOpen(true)}
-                              className="inline-flex items-center gap-1 text-xs bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
+                              onClick={() => openCallForLead(lead)}
+                              className="inline-flex items-center gap-1 text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition-colors font-bold shadow-sm"
                             >
                               <PhoneCall className="w-3.5 h-3.5" />
-                              Rele
+                              Ajoute Apèl (Set Status)
                             </button>
                             <button
                               onClick={() => fetchLeadLogs(lead)}
@@ -418,7 +432,10 @@ export default function DashboardPage() {
       {/* Add Call Modal */}
       <AddCallModal
         isOpen={isAddCallOpen}
-        onClose={() => setIsAddCallOpen(false)}
+        onClose={() => {
+          setIsAddCallOpen(false);
+          setSelectedLeadForCall(null);
+        }}
         onSuccess={() => fetchSessionAndData()}
         myLeads={leads}
         agentId={currentProfile.id}
