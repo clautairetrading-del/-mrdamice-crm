@@ -36,9 +36,12 @@ export default function DashboardPage() {
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
 
-  // Search Filter
+  // Multi-criteria Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFromFilter, setDateFromFilter] = useState<string>('');
+  const [dateToFilter, setDateToFilter] = useState<string>('');
+  const [agentFilter, setAgentFilter] = useState<string>('all');
 
   // Notifications State
   const [notifiedLeadIds, setNotifiedLeadIds] = useState<Set<string>>(new Set());
@@ -283,14 +286,31 @@ export default function DashboardPage() {
   const closes199 = calls.filter((c) => c.closed_program === 'Fòmasyon $199 USD').length;
   const closes1000 = calls.filter((c) => c.closed_program === 'Done For You $1,000 USD').length;
 
-  // Filtered Leads
-  const filteredLeads = leads.filter(
-    (l) =>
-      (statusFilter === 'all' || l.current_status === statusFilter) &&
-      (l.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        l.phone.includes(searchTerm) ||
-        (l.email && l.email.toLowerCase().includes(searchTerm.toLowerCase())))
-  );
+  // Filtered Leads (Multi-criteria: status, search term, date range, assigned agent)
+  const filteredLeads = leads.filter((l) => {
+    // 1. Status Filter
+    if (statusFilter !== 'all' && l.current_status !== statusFilter) return false;
+
+    // 2. Search Term Filter (Name, Phone, Email)
+    if (
+      searchTerm &&
+      !l.full_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !l.phone.includes(searchTerm) &&
+      (!l.email || !l.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    ) {
+      return false;
+    }
+
+    // 3. Agent Filter (for Admin)
+    if (agentFilter !== 'all' && l.assigned_to !== agentFilter) return false;
+
+    // 4. Date Range Filter (created_at / followup_date)
+    const leadCreatedDate = l.created_at ? l.created_at.split('T')[0] : '';
+    if (dateFromFilter && leadCreatedDate < dateFromFilter) return false;
+    if (dateToFilter && leadCreatedDate > dateToFilter) return false;
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex transition-colors duration-200">
@@ -474,56 +494,113 @@ export default function DashboardPage() {
           <div className="space-y-6">
             
             {/* Header & Controls bar for Leads menu */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-200 dark:border-gray-700/80">
+            <div className="space-y-4 bg-gray-50 dark:bg-gray-800/60 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
               
-              {/* Search Bar */}
-              <div className="relative w-full sm:max-w-md">
-                <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Fè rechèch pa non, imèl oswa telefòn..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
-                />
+              {/* Row 1: Search Bar & Actions */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                
+                {/* Search Bar */}
+                <div className="relative w-full sm:max-w-md">
+                  <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Fè rechèch pa non, imèl oswa telefòn..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                {/* Main Action Buttons */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  {/* Import CSV Button */}
+                  <button
+                    onClick={() => setIsImportCSVOpen(true)}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3.5 py-2.5 rounded-xl font-bold transition-all text-xs border border-gray-300 dark:border-gray-600 shadow-sm"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-amber-500" />
+                    Enpòte CSV
+                  </button>
+
+                  {/* Add New Lead Button */}
+                  <button
+                    onClick={() => setIsAddLeadOpen(true)}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold transition-all text-xs shadow-md shadow-amber-500/20"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Ajoute Nouvo Lead
+                  </button>
+                </div>
+
               </div>
 
-              {/* Action Buttons inside Lis Leads Mwen */}
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
+              {/* Row 2: Advanced Multi-criteria Filter Toolbar (Status, Date From, Date To, Agent) */}
+              <div className="pt-3 border-t border-gray-200/80 dark:border-gray-700/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
                 
-                {/* Status Filter Dropdown */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 shadow-sm"
-                >
-                  <option value="all">Tout Estati yo</option>
-                  <option value="Poko rele">Poko rele</option>
-                  <option value="Pa jwenn li">Pa jwenn li</option>
-                  <option value="Gen follow up">Gen follow up</option>
-                  <option value="Pa enterese">Pa enterese</option>
-                  <option value="Mwen pale ak li">Mwen pale ak li</option>
-                  <option value="Close">Close</option>
-                  <option value="Assistance">Assistance</option>
-                </select>
+                {/* 1. Status Filter */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
+                    ESTATI APÈL
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 shadow-sm"
+                  >
+                    <option value="all">Tout Estati yo</option>
+                    <option value="Poko rele">1. Poko rele</option>
+                    <option value="Pa jwenn li">2. Pa jwenn li</option>
+                    <option value="Gen follow up">3. Gen follow up</option>
+                    <option value="Pa enterese">4. Pa enterese</option>
+                    <option value="Mwen pale ak li">5. Mwen pale ak li</option>
+                    <option value="Close">6. Close</option>
+                    <option value="Assistance">7. Assistance</option>
+                  </select>
+                </div>
 
-                {/* Import CSV Button */}
-                <button
-                  onClick={() => setIsImportCSVOpen(true)}
-                  className="flex items-center gap-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3.5 py-2 rounded-xl font-bold transition-all text-xs border border-gray-300 dark:border-gray-600 shadow-sm"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-amber-500" />
-                  Enpòte CSV
-                </button>
+                {/* 2. Date From Filter */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
+                    DEPATI DAT (FROM)
+                  </label>
+                  <input
+                    type="date"
+                    value={dateFromFilter}
+                    onChange={(e) => setDateFromFilter(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 shadow-sm"
+                  />
+                </div>
 
-                {/* Add New Lead Button */}
-                <button
-                  onClick={() => setIsAddLeadOpen(true)}
-                  className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold transition-all text-xs shadow-md shadow-amber-500/20"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Ajoute Nouvo Lead
-                </button>
+                {/* 3. Date To Filter */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
+                    RIVE DAT (TO)
+                  </label>
+                  <input
+                    type="date"
+                    value={dateToFilter}
+                    onChange={(e) => setDateToFilter(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 shadow-sm"
+                  />
+                </div>
+
+                {/* 4. Reset Filters Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setSearchTerm('');
+                      setDateFromFilter('');
+                      setDateToFilter('');
+                      setAgentFilter('all');
+                    }}
+                    className="w-full bg-gray-200/80 dark:bg-gray-700/80 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 rounded-xl text-xs font-bold transition-all border border-gray-300 dark:border-gray-600"
+                  >
+                    🔄 Reyajiste Filtè (Reset)
+                  </button>
+                </div>
+
               </div>
 
             </div>
