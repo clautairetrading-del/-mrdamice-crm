@@ -128,7 +128,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
           fullName: mode === 'new' ? fullName : undefined,
           email: mode === 'new' ? email : undefined,
           status,
-          closedProgram: status === 'Close' ? closedProgram : undefined,
+          closedProgram: (status === 'Close' || status === 'Assistance') ? closedProgram : undefined,
           assistanceNote: status === 'Assistance' ? assistanceNote : undefined,
           notes: status === 'Gen follow up' && followupDate ? `${notes} (Follow-up: ${followupDate} à ${followupTime || '09:00'})` : notes,
           agentId,
@@ -412,17 +412,47 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             </div>
           )}
 
-          {/* TEXT FIELD TRIGGER FOR ASSISTANCE */}
+          {/* TEXT FIELD & PROGRAM SELECTOR FOR ASSISTANCE */}
           {status === 'Assistance' && (
-            <div className="p-4 bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/30 rounded-xl space-y-2 animate-in fade-in">
-              <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+            <div className="p-4 bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/30 rounded-xl space-y-3 animate-in fade-in">
+              <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-wider">
                 <FileText className="w-4 h-4" />
-                KI KALITE ASISTANS OSHWA SIPÒ OU BAY KLIYAN AN?
+                1. KI PWOGRAM/FÒMASYON KLIYAN AN PRAN NAN LIVE COACHING AN? *
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                  <input
+                    type="radio"
+                    name="assistanceProgram"
+                    value="Fòmasyon $199 USD"
+                    checked={closedProgram === 'Fòmasyon $199 USD'}
+                    onChange={(e) => setClosedProgram(e.target.value as OfferProgram)}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">Fòmasyon $199 USD</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                  <input
+                    type="radio"
+                    name="assistanceProgram"
+                    value="Done For You $1,000 USD"
+                    checked={closedProgram === 'Done For You $1,000 USD'}
+                    onChange={(e) => setClosedProgram(e.target.value as OfferProgram)}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">Done For You $1,000 USD</span>
+                </label>
+              </div>
+
+              <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-wider pt-2">
+                <FileText className="w-4 h-4" />
+                2. DETAY SOU ASISTANS/SIPÒ OU BAY KLIYAN AN *
               </label>
               <textarea
                 required
                 rows={3}
-                placeholder="Ekri detay sou asistans ou bay la (ek. Konfigirasyon kont, eksplikasyon fòmasyon...)"
+                placeholder="Ekri detay sou asistans ou bay la (ek. Sipò pou peman, konfigirasyon kont...)"
                 value={assistanceNote}
                 onChange={(e) => setAssistanceNote(e.target.value)}
                 className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-blue-500"

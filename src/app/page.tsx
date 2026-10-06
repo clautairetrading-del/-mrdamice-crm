@@ -278,14 +278,15 @@ export default function DashboardPage() {
 
   const isAdmin = currentProfile.role === 'admin';
 
-  // Metrics calculation
+  // Metrics calculation (Includes both direct Close and Live Coaching Assistance closes)
   const todayStr = new Date().toISOString().split('T')[0];
   const todayCalls = calls.filter((c) => c.created_at.startsWith(todayStr)).length;
   const weekCalls = calls.length; // Simplified for demo
   const monthCalls = calls.length;
 
-  const closes199 = calls.filter((c) => c.closed_program === 'Fòmasyon $199 USD').length;
-  const closes1000 = calls.filter((c) => c.closed_program === 'Done For You $1,000 USD').length;
+  const closes199 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length 
+    || leads.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
+  const closes1000 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
 
   // Filtered Leads (Multi-criteria: status, search term, date range, assigned agent)
   const filteredLeads = leads.filter((l) => {
