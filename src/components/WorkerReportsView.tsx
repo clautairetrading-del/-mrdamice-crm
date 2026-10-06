@@ -29,28 +29,41 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthStartStr = startOfMonth.toISOString().split('T')[0];
 
+  // Filter leads based on timeRange (using created_at or updated_at)
+  const filteredLeads = myLeads.filter((lead) => {
+    const leadDate = lead.created_at ? lead.created_at.split('T')[0] : todayStr;
+    if (timeRange === 'today') return leadDate === todayStr;
+    if (timeRange === 'week') return leadDate >= weekStartStr;
+    if (timeRange === 'month') return leadDate >= monthStartStr;
+    return true; // overall
+  });
+
   // Filter calls based on timeRange
   const filteredCalls = calls.filter((call) => {
-    const callDate = call.created_at ? call.created_at.split('T')[0] : '';
+    const callDate = call.created_at ? call.created_at.split('T')[0] : todayStr;
     if (timeRange === 'today') return callDate === todayStr;
     if (timeRange === 'week') return callDate >= weekStartStr;
     if (timeRange === 'month') return callDate >= monthStartStr;
     return true; // overall
   });
 
-  // Performance metrics calculation
-  const totalCallsCount = filteredCalls.length;
+  // Combined records logic: total calls or total active leads managed in this period
+  const totalCallsCount = Math.max(filteredCalls.length, filteredLeads.length);
+
+  // Closed leads and revenue calculation (combining call records and lead current_status)
+  const closedLeads = filteredLeads.filter((l) => l.current_status === 'Close');
   const closedCalls = filteredCalls.filter((c) => c.status === 'Close');
-  const totalCloses = closedCalls.length;
+  const totalCloses = Math.max(closedLeads.length, closedCalls.length);
+
   const totalRevenue = closedCalls.reduce((acc, c) => {
     if (c.closed_program === 'Done For You $1,000 USD') return acc + 1000;
     if (c.closed_program === 'Fòmasyon $199 USD') return acc + 199;
-    return acc + 199; // Default close value fallback
-  }, 0);
+    return acc + 199;
+  }, closedLeads.length > 0 && closedCalls.length === 0 ? closedLeads.length * 199 : 0);
 
-  const followUpCallsCount = filteredCalls.filter((c) => c.status === 'Gen follow up').length;
-  const assistanceCallsCount = filteredCalls.filter((c) => c.status === 'Assistance').length;
-  const spokenCallsCount = filteredCalls.filter((c) => c.status === 'Mwen pale ak li').length;
+  const followUpCount = filteredLeads.filter((l) => l.current_status === 'Gen follow up').length || filteredCalls.filter((c) => c.status === 'Gen follow up').length;
+  const assistanceCount = filteredLeads.filter((l) => l.current_status === 'Assistance').length || filteredCalls.filter((c) => c.status === 'Assistance').length;
+  const spokenCount = filteredLeads.filter((l) => l.current_status === 'Mwen pale ak li').length || filteredCalls.filter((c) => c.status === 'Mwen pale ak li').length;
 
   const conversionRate = totalCallsCount > 0 ? ((totalCloses / totalCallsCount) * 100).toFixed(1) : '0';
 
@@ -201,23 +214,23 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <p className="text-xs font-semibold text-gray-500">Gen Follow-up Ranvwaye</p>
-              <p className="text-xl font-bold text-blue-600 mt-1">{followUpCallsCount}</p>
+              <p className="text-xl font-bold text-blue-600 mt-1">{followUpCount}</p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <p className="text-xs font-semibold text-gray-500">Asistans / Sipò Bay</p>
-              <p className="text-xl font-bold text-emerald-600 mt-1">{assistanceCallsCount}</p>
+              <p className="text-xl font-bold text-emerald-600 mt-1">{assistanceCount}</p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <p className="text-xs font-semibold text-gray-500">Mwen pale ak li</p>
-              <p className="text-xl font-bold text-purple-600 mt-1">{spokenCallsCount}</p>
+              <p className="text-xl font-bold text-purple-600 mt-1">{spokenCount}</p>
             </div>
           </div>
         </div>
 
-        {/* Detailed Call History Log inside Report */}
+        {/* Detailed Call & Lead History Log inside Report */}
         <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
           <h4 className="text-sm font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">
-            📋 LIS APÈL AK LEADS KI RESAN YO ({filteredCalls.length})
+            📋 LIS APÈL AK LEADS KI RESAN YO ({Math.max(filteredCalls.length, filteredLeads.length)})
           </h4>
 
           <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl">
@@ -232,13 +245,13 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredCalls.length === 0 ? (
+                {filteredCalls.length === 0 && filteredLeads.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-6 text-center text-gray-400">
                       Pa gen okenn done apèl anrejistre pou peryòd sa ({timeRange}).
                     </td>
                   </tr>
-                ) : (
+                ) : filteredCalls.length > 0 ? (
                   filteredCalls.slice(0, 15).map((call, idx) => {
                     const leadObj = myLeads.find((l) => l.id === call.lead_id);
                     return (
@@ -263,6 +276,28 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
                       </tr>
                     );
                   })
+                ) : (
+                  filteredLeads.slice(0, 15).map((lead, idx) => (
+                    <tr key={lead.id || idx} className="hover:bg-gray-50/50">
+                      <td className="p-3 font-mono text-gray-500">
+                        {lead.created_at ? lead.created_at.replace('T', ' ').slice(0, 16) : todayStr}
+                      </td>
+                      <td className="p-3 font-bold text-gray-900 dark:text-white">
+                        {lead.full_name}
+                      </td>
+                      <td className="p-3 font-mono text-amber-600 font-semibold">
+                        {lead.phone}
+                      </td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          {lead.current_status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right font-medium text-gray-600 dark:text-gray-300">
+                        {lead.email || 'Lead anrejistre'}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
