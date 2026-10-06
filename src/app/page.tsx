@@ -8,7 +8,8 @@ import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { HistoryLogViewer } from '@/components/HistoryLogViewer';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye } from 'lucide-react';
+import { AuthScreen } from '@/components/AuthScreen';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -28,43 +29,73 @@ export default function DashboardPage() {
   // Search Filter
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Initial Mock / Auth Fetch
   useEffect(() => {
-    fetchInitialData();
+    fetchSessionAndData();
+
+    // Listen to Auth State changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        fetchSessionAndData();
+      } else {
+        setCurrentProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const fetchInitialData = async () => {
+  const fetchSessionAndData = async () => {
     setLoading(true);
-    
-    // Fetch Current User / Profiles
-    const { data: profiles } = await supabase.from('profiles').select('*');
-    if (profiles && profiles.length > 0) {
-      setAllProfiles(profiles);
-      // Default to first profile or mock active profile
-      setCurrentProfile(profiles[0]);
-    } else {
-      // Temporary fallback profile if auth is not initialized
-      const mockUser: Profile = {
-        id: '11111111-1111-1111-1111-111111111111',
-        full_name: 'Mr Damice Admin',
-        email: 'admin@mrdamice.com',
-        role: 'admin',
-        is_online: true,
-        created_at: new Date().toISOString(),
-      };
-      setCurrentProfile(mockUser);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      setCurrentProfile(null);
+      setLoading(false);
+      return;
     }
 
-    // Fetch Leads & Calls based on role/RLS
-    const { data: leadsData } = await supabase
-      .from('leads')
-      .select('*, assigned_agent:profiles!assigned_to(*)');
-    if (leadsData) setLeads(leadsData);
+    const userId = session.user.id;
 
-    const { data: callsData } = await supabase.from('calls').select('*');
-    if (callsData) setCalls(callsData);
+    // Fetch user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      setCurrentProfile(profile);
+
+      // Fetch all profiles for dropdowns & admin view
+      const { data: profilesData } = await supabase.from('profiles').select('*');
+      if (profilesData) setAllProfiles(profilesData);
+
+      // Fetch Leads & Calls (RLS will automatically filter for workers vs admin)
+      const { data: leadsData } = await supabase
+        .from('leads')
+        .select('*, assigned_agent:profiles!assigned_to(*)');
+      if (leadsData) setLeads(leadsData);
+
+      const { data: callsData } = await supabase.from('calls').select('*');
+      if (callsData) setCalls(callsData);
+    }
 
     setLoading(false);
+  };
+
+  const handleSignOut = async () => {
+    if (currentProfile) {
+      await supabase
+        .from('profiles')
+        .update({ is_online: false, last_seen_at: new Date().toISOString() })
+        .eq('id', currentProfile.id);
+    }
+    await supabase.auth.signOut();
+    setCurrentProfile(null);
   };
 
   const fetchLeadLogs = async (lead: Lead) => {
@@ -77,7 +108,7 @@ export default function DashboardPage() {
     if (data) setHistoryLogs(data);
   };
 
-  if (loading || !currentProfile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-gray-900 dark:text-white">
         <div className="flex flex-col items-center gap-3">
@@ -86,6 +117,11 @@ export default function DashboardPage() {
         </div>
       </div>
     );
+  }
+
+  // Render Login / SignUp Screen if not authenticated
+  if (!currentProfile) {
+    return <AuthScreen onSuccess={fetchSessionAndData} />;
   }
 
   const isAdmin = currentProfile.role === 'admin';
@@ -166,19 +202,29 @@ export default function DashboardPage() {
           </nav>
         </div>
 
-        {/* Profile Card Bottom */}
-        <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700/80 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-              {currentProfile.full_name.charAt(0).toUpperCase()}
-            </div>
-            <div className="truncate max-w-[110px]">
-              <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{currentProfile.full_name}</p>
-              <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-400 px-1.5 py-0.5 rounded font-mono uppercase font-semibold">
-                {currentProfile.role}
-              </span>
+        {/* Profile Card Bottom & SignOut */}
+        <div className="space-y-2">
+          <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700/80 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                {currentProfile.full_name.charAt(0).toUpperCase()}
+              </div>
+              <div className="truncate max-w-[110px]">
+                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{currentProfile.full_name}</p>
+                <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-400 px-1.5 py-0.5 rounded font-mono uppercase font-semibold">
+                  {currentProfile.role}
+                </span>
+              </div>
             </div>
           </div>
+
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Dekonekte (Sign Out)
+          </button>
         </div>
       </aside>
 
@@ -331,7 +377,7 @@ export default function DashboardPage() {
       <AddCallModal
         isOpen={isAddCallOpen}
         onClose={() => setIsAddCallOpen(false)}
-        onSuccess={fetchInitialData}
+        onSuccess={fetchSessionAndData}
         myLeads={leads}
         agentId={currentProfile.id}
       />
