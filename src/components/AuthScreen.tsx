@@ -101,7 +101,7 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
         // Fallback test login profiles if user clicked quick test buttons
         const fallbackRole: UserRole = cleanEmail.toLowerCase().includes('admin') ? 'admin' : 'worker';
         const fallbackId = cleanEmail.toLowerCase().includes('admin') ? 'admin-uuid-1234' : `worker-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '')}`;
-        const fallbackName = cleanEmail.toLowerCase().includes('admin') ? 'Mr Damice Admin' : (cleanEmail.split('@')[0] || 'Ajan Worker Test');
+        const fallbackName = cleanEmail.toLowerCase().includes('admin') ? 'Mr Damice Admin' : (cleanEmail.split('@')[0] || 'User Test Worker');
         
         const fallbackProfile: Profile = {
           id: fallbackId,
@@ -175,7 +175,7 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
 
             <button
               type="button"
-              onClick={() => fillTestCredentials('Usertest@damice.com', 'User@1234', 'Ajan Worker Test', 'worker')}
+              onClick={() => fillTestCredentials('Usertest@damice.com', 'User@1234', 'User Test Worker', 'worker')}
               className="p-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-left hover:border-amber-500 transition-colors"
             >
               <div className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
