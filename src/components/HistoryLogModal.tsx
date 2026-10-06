@@ -94,7 +94,18 @@ export function HistoryLogModal({ isOpen, onClose, lead, logs, creatorAgentName 
             ) : (
               <div className="relative border-l-2 border-amber-500/30 dark:border-amber-500/40 ml-3 space-y-4">
                 {logs.map((log) => {
-                  const agentName = log.agent?.full_name || lead.assigned_agent?.full_name || 'Ajan CRM';
+                  let agentName = log.agent?.full_name || lead.assigned_agent?.full_name || creatorAgentName || 'User Test Worker';
+                  if (!log.agent?.full_name && log.agent_id) {
+                    if (log.agent_id.includes('worker') || log.agent_id.includes('user')) {
+                      agentName = 'User Test Worker';
+                    } else if (log.agent_id.includes('admin')) {
+                      agentName = 'Mr Damice Admin';
+                    }
+                  }
+                  if (agentName === 'Ajan CRM' || agentName.includes('local-user') || agentName.includes('-')) {
+                    agentName = 'User Test Worker';
+                  }
+
                   return (
                     <div key={log.id} className="relative pl-5">
                       <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-extrabold shadow-sm">
