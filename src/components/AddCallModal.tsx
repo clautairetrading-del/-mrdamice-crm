@@ -86,6 +86,40 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
         return;
       }
 
+      // Validate restriction for follow-up date & time (cannot set past dates or past times for today)
+      if (status === 'Gen follow up' && followupDate) {
+        const now = new Date();
+        const selectedDateTimeStr = followupTime ? `${followupDate}T${followupTime}` : `${followupDate}T23:59`;
+        const selectedDateObj = new Date(selectedDateTimeStr);
+        
+        // Extract strictly today's YYYY-MM-DD
+        const todayStr = now.toISOString().split('T')[0];
+
+        if (followupDate < todayStr) {
+          setFeedback({
+            type: 'error',
+            msg: 'Ou paka chwazi yon dat ki pase deja (hier oswa anvan) pou yon follow-up!',
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (followupDate === todayStr && followupTime) {
+          const currentHours = String(now.getHours()).padStart(2, '0');
+          const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+          const currentTimeStr = `${currentHours}:${currentMinutes}`;
+          
+          if (followupTime < currentTimeStr) {
+            setFeedback({
+              type: 'error',
+              msg: `Ou paka chwazi yon lè ki pase deja jodi a (${followupTime} pase ${currentTimeStr} deja)!`,
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       // Execute safe local call submit with optional follow up date/time saved explicitly to lead
       let res;
       try {
@@ -322,6 +356,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
                   </label>
                   <input
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={followupDate}
                     onChange={(e) => setFollowupDate(e.target.value)}
                     className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
@@ -409,12 +444,20 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             />
           </div>
 
-          {/* Feedback banner - Always green for success messages */}
+          {/* Feedback banner */}
           {feedback && (
             <div
-              className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold`}
+              className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 font-semibold ${
+                feedback.type === 'error'
+                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                  : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+              }`}
             >
-              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              {feedback.type === 'error' ? (
+                <AlertTriangle className="w-5 h-5 shrink-0 text-rose-600 dark:text-rose-400" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              )}
               <span>{feedback.msg}</span>
             </div>
           )}
