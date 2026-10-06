@@ -271,10 +271,17 @@ export default function DashboardPage() {
 
   // Helper to instantly append a newly created lead in local state without reloading or refreshing
   const handleAddNewLeadLocally = (newLead: Lead) => {
+    const enrichedLead: Lead = {
+      ...newLead,
+      assigned_to: newLead.assigned_to || currentProfile?.id,
+      created_by: newLead.created_by || currentProfile?.id,
+    };
     setLeads((prevLeads) => {
-      const exists = prevLeads.some((l) => l.phone === newLead.phone || l.id === newLead.id);
-      if (exists) return prevLeads;
-      return [newLead, ...prevLeads];
+      const exists = prevLeads.some((l) => l.phone === enrichedLead.phone || l.id === enrichedLead.id);
+      if (exists) {
+        return prevLeads.map((l) => (l.phone === enrichedLead.phone || l.id === enrichedLead.id ? enrichedLead : l));
+      }
+      return [enrichedLead, ...prevLeads];
     });
   };
 
@@ -344,11 +351,17 @@ export default function DashboardPage() {
   // Strictly scope calls and leads for Worker vs Admin
   const myCalls = isAdmin 
     ? calls 
-    : calls.filter((c) => c.agent_id === currentProfile.id);
+    : calls.filter((c) => c.agent_id === currentProfile.id || c.agent_id === currentProfile.email);
 
   const myLeadsList = isAdmin 
     ? leads 
-    : leads.filter((l) => l.assigned_to === currentProfile.id || l.created_by === currentProfile.id);
+    : leads.filter((l) => {
+        const matchesId = l.assigned_to === currentProfile.id || l.created_by === currentProfile.id;
+        const matchesEmail = (l.assigned_to && l.assigned_to === currentProfile.email) || (l.created_by && l.created_by === currentProfile.email);
+        const matchesAgentObj = l.assigned_agent && (l.assigned_agent.id === currentProfile.id || l.assigned_agent.email === currentProfile.email);
+        // Include unassigned leads if created during this session
+        return matchesId || matchesEmail || matchesAgentObj || !l.assigned_to;
+      });
 
   // Live call counts for Worker (strictly scoped to currentProfile)
   const todayCalls = Math.max(
