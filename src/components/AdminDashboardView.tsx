@@ -150,9 +150,7 @@ export function AdminDashboardView({
 
         </form>
       </div>
-  return (
-    <div className="space-y-8">
-      
+
       {/* Real-time Online Agents Banner */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 p-6 rounded-2xl shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between mb-4">
