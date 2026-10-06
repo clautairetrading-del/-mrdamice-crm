@@ -207,11 +207,33 @@ export default function DashboardPage() {
 
     // Fetch profiles & leads
     const { data: profilesData } = await supabase.from('profiles').select('*');
-    if (profilesData && profilesData.length > 0) {
-      setAllProfiles(profilesData);
-    } else {
-      setAllProfiles([activeUser]);
+    let mergedProfiles: Profile[] = profilesData && profilesData.length > 0 ? [...profilesData] : [];
+
+    // Ensure active user and stored test profiles exist in allProfiles list
+    try {
+      const storedLocalProfiles = localStorage.getItem('mrdamice_crm_local_profiles');
+      let localProfilesList: Profile[] = storedLocalProfiles ? JSON.parse(storedLocalProfiles) : [];
+      
+      // Add activeUser if not present
+      if (!localProfilesList.some((p) => p.id === activeUser.id || p.email === activeUser.email)) {
+        localProfilesList.push(activeUser);
+      }
+      localStorage.setItem('mrdamice_crm_local_profiles', JSON.stringify(localProfilesList));
+
+      localProfilesList.forEach((lp) => {
+        if (!mergedProfiles.some((p) => p.id === lp.id || p.email === lp.email)) {
+          mergedProfiles.push(lp);
+        }
+      });
+    } catch (e) {
+      console.warn('Local profiles sync notice:', e);
     }
+
+    if (!mergedProfiles.some((p) => p.id === activeUser.id)) {
+      mergedProfiles.push(activeUser);
+    }
+
+    setAllProfiles(mergedProfiles);
 
     let fetchedLeads: Lead[] = [];
 

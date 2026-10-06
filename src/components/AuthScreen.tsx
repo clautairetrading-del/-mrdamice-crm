@@ -100,14 +100,28 @@ export function AuthScreen({ onSuccess }: AuthModalProps) {
 
         // Fallback test login profiles if user clicked quick test buttons
         const fallbackRole: UserRole = cleanEmail.toLowerCase().includes('admin') ? 'admin' : 'worker';
+        const fallbackId = cleanEmail.toLowerCase().includes('admin') ? 'admin-uuid-1234' : `worker-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '')}`;
+        const fallbackName = cleanEmail.toLowerCase().includes('admin') ? 'Mr Damice Admin' : (cleanEmail.split('@')[0] || 'Ajan Worker Test');
+        
         const fallbackProfile: Profile = {
-          id: cleanEmail.toLowerCase().includes('admin') ? 'admin-uuid-1234' : 'worker-uuid-5678',
-          full_name: cleanEmail.toLowerCase().includes('admin') ? 'Mr Damice Admin' : 'Ajan Worker Test',
+          id: fallbackId,
+          full_name: fallbackName,
           email: cleanEmail,
           role: fallbackRole,
           is_online: true,
           created_at: new Date().toISOString(),
         };
+
+        try {
+          const stored = localStorage.getItem('mrdamice_crm_local_profiles');
+          const list: Profile[] = stored ? JSON.parse(stored) : [];
+          if (!list.some((p) => p.id === fallbackProfile.id || p.email === fallbackProfile.email)) {
+            list.push(fallbackProfile);
+            localStorage.setItem('mrdamice_crm_local_profiles', JSON.stringify(list));
+          }
+        } catch (e) {
+          console.warn('Profile registry save notice:', e);
+        }
 
         onSuccess(fallbackProfile);
       }
