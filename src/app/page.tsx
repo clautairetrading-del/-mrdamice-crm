@@ -732,41 +732,55 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
                   <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs">
                     <tr>
-                      <th className="px-6 py-4">Nom / Imèl</th>
-                      <th className="px-6 py-4">Telefòn</th>
-                      <th className="px-6 py-4">Estati Kounya</th>
-                      <th className="px-6 py-4">Ajan ki Asiyen</th>
-                      <th className="px-6 py-4 text-right">Aksyon</th>
+                      <th className="px-5 py-4">Nom / Imèl</th>
+                      <th className="px-5 py-4">Telefòn</th>
+                      <th className="px-5 py-4">Estati Kounya</th>
+                      <th className="px-5 py-4">Moun ki Ajoute L</th>
+                      <th className="px-5 py-4">Ajan Asiyen</th>
+                      <th className="px-5 py-4">Dat Ajoute</th>
+                      <th className="px-5 py-4 text-right">Aksyon</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                     {filteredLeads.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                           Pa gen okenn lead nan lis la pou kounya. Klike sou "Ajoute Nouvo Lead" pou w kreye youn!
                         </td>
                       </tr>
                     ) : (
-                      filteredLeads.map((lead) => (
-                        <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
-                          <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                            <div>{lead.full_name}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">{lead.email || 'Pas d\'email'}</div>
-                          </td>
-                          <td className="px-6 py-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">{lead.phone}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              lead.current_status === 'Poko rele' 
-                                ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
-                                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
-                            }`}>
-                              {lead.current_status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
-                            {lead.assigned_agent?.full_name || currentProfile.full_name}
-                          </td>
-                          <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      filteredLeads.map((lead) => {
+                        const creatorProfile = allProfiles.find((p) => p.id === lead.created_by) || lead.assigned_agent;
+                        const assignedProfile = lead.assigned_agent || allProfiles.find((p) => p.id === lead.assigned_to);
+
+                        return (
+                          <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
+                            <td className="px-5 py-4 font-semibold text-gray-900 dark:text-white">
+                              <div>{lead.full_name}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">{lead.email || 'Pas d\'email'}</div>
+                            </td>
+                            <td className="px-5 py-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">{lead.phone}</td>
+                            <td className="px-5 py-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                lead.current_status === 'Poko rele' 
+                                  ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
+                              }`}>
+                                {lead.current_status}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700/60 text-gray-800 dark:text-gray-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-600">
+                                👤 {creatorProfile?.full_name || 'Ajan Worker'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 dark:text-gray-300 text-xs font-medium">
+                              {assignedProfile?.full_name || currentProfile.full_name}
+                            </td>
+                            <td className="px-5 py-4 text-gray-500 dark:text-gray-400 text-xs font-mono">
+                              {lead.created_at ? lead.created_at.split('T')[0] : 'Jodi a'}
+                            </td>
+                            <td className="px-5 py-4 text-right flex items-center justify-end gap-2">
                             <button
                               onClick={() => openCallForLead(lead)}
                               className="inline-flex items-center gap-1 text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition-colors font-bold shadow-sm"
@@ -783,8 +797,9 @@ export default function DashboardPage() {
                             </button>
                           </td>
                         </tr>
-                      ))
-                    )}
+                      );
+                    })
+                  )}
                   </tbody>
                 </table>
               </div>
