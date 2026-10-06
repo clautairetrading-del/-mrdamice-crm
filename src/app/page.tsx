@@ -759,11 +759,12 @@ export default function DashboardPage() {
                       </tr>
                     ) : (
                       filteredLeads.map((lead) => {
-                        // Priority 1: Match profile by lead.created_by or lead.assigned_to
-                        const creatorProfile = allProfiles.find((p) => (lead.created_by && p.id === lead.created_by) || (lead.assigned_to && p.id === lead.assigned_to)) 
+                        // Priority 1: Match creator profile strictly by lead.created_by
+                        const creatorProfile = allProfiles.find((p) => lead.created_by && p.id === lead.created_by)
+                          || allProfiles.find((p) => lead.assigned_to && p.id === lead.assigned_to)
                           || lead.assigned_agent;
 
-                        // Priority 2: Match assigned profile (if assigned_to equals admin ID or is missing, use creator profile)
+                        // Priority 2: Match assigned agent profile strictly by lead.assigned_to
                         let assignedProfile = allProfiles.find((p) => lead.assigned_to && p.id === lead.assigned_to) 
                           || lead.assigned_agent;
 
@@ -773,11 +774,11 @@ export default function DashboardPage() {
 
                         const creatorName = creatorProfile?.full_name 
                           ? creatorProfile.full_name 
-                          : (lead.assigned_agent?.full_name || currentProfile.full_name);
+                          : (isAdmin ? 'Ajan Worker' : currentProfile.full_name);
 
                         const assignedName = assignedProfile?.full_name 
                           ? assignedProfile.full_name 
-                          : (lead.assigned_agent?.full_name || currentProfile.full_name);
+                          : (isAdmin ? 'Ajan Worker' : currentProfile.full_name);
 
                         return (
                           <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
