@@ -278,15 +278,59 @@ export default function DashboardPage() {
 
   const isAdmin = currentProfile.role === 'admin';
 
-  // Metrics calculation (Includes both direct Close and Live Coaching Assistance closes)
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayCalls = calls.filter((c) => c.created_at.startsWith(todayStr)).length;
-  const weekCalls = calls.length; // Simplified for demo
-  const monthCalls = calls.length;
+  // Real-time Metrics calculation (combines call history logs and live managed leads)
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
 
+  // Calculate start of week (Monday)
+  const startOfWeekDate = new Date(now);
+  const currentDayOfWeek = startOfWeekDate.getDay();
+  const diffToMon = startOfWeekDate.getDate() - currentDayOfWeek + (currentDayOfWeek === 0 ? -6 : 1);
+  startOfWeekDate.setDate(diffToMon);
+  const weekStartStr = startOfWeekDate.toISOString().split('T')[0];
+
+  // Calculate start of month
+  const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+
+  // Live call counts for Worker
+  const todayCalls = Math.max(
+    calls.filter((c) => c.created_at && c.created_at.startsWith(todayStr)).length,
+    leads.filter((l) => l.created_at && l.created_at.startsWith(todayStr)).length
+  );
+
+  const weekCalls = Math.max(
+    calls.filter((c) => c.created_at && c.created_at.split('T')[0] >= weekStartStr).length,
+    leads.filter((l) => l.created_at && l.created_at.split('T')[0] >= weekStartStr).length
+  );
+
+  const monthCalls = Math.max(
+    calls.filter((c) => c.created_at && c.created_at.split('T')[0] >= monthStartStr).length,
+    leads.filter((l) => l.created_at && l.created_at.split('T')[0] >= monthStartStr).length
+  );
+
+  // Closes Breakdown ($199 vs $1,000)
   const closes199 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length 
     || leads.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
   const closes1000 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
+
+  // Dynamic 7-Day Live Bar Chart Data (Lendi to Dimanch)
+  const dayNames = ['Dimanch', 'Lendi', 'Madi', 'Mèkredi', 'Jedi', 'Vandredi', 'Samdi'];
+  const dailyStatsData = Array.from({ length: 7 }).map((_, idx) => {
+    const d = new Date(startOfWeekDate);
+    d.setDate(d.getDate() + idx);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayLabel = dayNames[d.getDay()];
+
+    const dayCallCount = Math.max(
+      calls.filter((c) => c.created_at && c.created_at.startsWith(dateStr)).length,
+      leads.filter((l) => l.created_at && l.created_at.startsWith(dateStr)).length
+    );
+
+    return {
+      date: dayLabel,
+      calls: dayCallCount,
+    };
+  });
 
   // Filtered Leads (Multi-criteria: status, search term, date range, assigned agent)
   const filteredLeads = leads.filter((l) => {
@@ -495,13 +539,7 @@ export default function DashboardPage() {
             monthCalls={monthCalls}
             closes199={closes199}
             closes1000={closes1000}
-            dailyStatsData={[
-              { date: 'Lendi', calls: 12 },
-              { date: 'Madi', calls: 19 },
-              { date: 'Mèkredi', calls: 15 },
-              { date: 'Jedi', calls: 22 },
-              { date: 'Vandredi', calls: 18 },
-            ]}
+            dailyStatsData={dailyStatsData}
           />
         )}
 
