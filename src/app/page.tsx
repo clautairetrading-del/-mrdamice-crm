@@ -201,6 +201,9 @@ export default function DashboardPage() {
     }
 
     setCurrentProfile(activeUser);
+    if (activeUser.role === 'admin') {
+      setActiveTab('admin');
+    }
 
     // Fetch profiles & leads
     const { data: profilesData } = await supabase.from('profiles').select('*');
