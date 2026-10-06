@@ -76,7 +76,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
         return;
       }
 
-      // Execute safe local call submit with optional follow up date/time
+      // Execute safe local call submit with optional follow up date/time saved explicitly to lead
       let res;
       try {
         res = await submitCallOrLead({
@@ -86,7 +86,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
           status,
           closedProgram: status === 'Close' ? closedProgram : undefined,
           assistanceNote: status === 'Assistance' ? assistanceNote : undefined,
-          notes: status === 'Gen follow up' && followupDate ? `${notes} (Follow-up ranvwaye pou ${followupDate} a ${followupTime || '09:00'})` : notes,
+          notes: status === 'Gen follow up' && followupDate ? `${notes} (Follow-up: ${followupDate} à ${followupTime || '09:00'})` : notes,
           agentId,
           existingLeadId: mode === 'existing' ? selectedLeadId : undefined,
         });
@@ -97,6 +97,25 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
           leadId: selectedLeadId || 'lead-local',
           message: `Estati apèl la mete ajou avèk siksè pou: ${fullName || activePhone}!`,
         };
+      }
+
+      // Update follow-up date and time locally on the lead object in localStorage
+      try {
+        const stored = localStorage.getItem('mrdamice_crm_local_leads');
+        if (stored) {
+          const leadsList = JSON.parse(stored);
+          const target = leadsList.find((l: any) => l.phone === activePhone || l.id === selectedLeadId);
+          if (target) {
+            target.current_status = status;
+            if (status === 'Gen follow up' && followupDate) {
+              target.followup_date = followupDate;
+              target.followup_time = followupTime || '09:00';
+            }
+            localStorage.setItem('mrdamice_crm_local_leads', JSON.stringify(leadsList));
+          }
+        }
+      } catch (e) {
+        console.warn('Local lead update notice:', e);
       }
 
       setFeedback({
