@@ -111,7 +111,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex transition-colors duration-200">
       
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200/80 dark:border-gray-700/80 p-6 flex flex-col justify-between hidden md:flex transition-colors duration-200">
+      <aside className="w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700/80 p-6 flex flex-col justify-between hidden md:flex transition-colors duration-200">
         <div className="space-y-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Profile Card Bottom */}
-        <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between">
+        <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
               {currentProfile.full_name.charAt(0).toUpperCase()}
@@ -186,7 +186,7 @@ export default function DashboardPage() {
       <main className="flex-1 p-6 md:p-10 overflow-y-auto space-y-8 bg-white dark:bg-gray-900">
         
         {/* Top Bar Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200/80 dark:border-gray-800 pb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">
               {activeTab === 'dashboard' && 'Dashboard Pèfòmans'}
@@ -242,12 +242,12 @@ export default function DashboardPage() {
                 placeholder="Fè rechèch pa non, imèl oswa telefòn..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-amber-500"
               />
             </div>
 
             {/* Table */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm dark:shadow-none overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-2xl shadow-sm dark:shadow-none overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
                   <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs">
