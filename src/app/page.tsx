@@ -341,26 +341,35 @@ export default function DashboardPage() {
   // Calculate start of month
   const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-  // Live call counts for Worker
+  // Strictly scope calls and leads for Worker vs Admin
+  const myCalls = isAdmin 
+    ? calls 
+    : calls.filter((c) => c.agent_id === currentProfile.id);
+
+  const myLeadsList = isAdmin 
+    ? leads 
+    : leads.filter((l) => l.assigned_to === currentProfile.id || l.created_by === currentProfile.id);
+
+  // Live call counts for Worker (strictly scoped to currentProfile)
   const todayCalls = Math.max(
-    calls.filter((c) => c.created_at && c.created_at.startsWith(todayStr)).length,
-    leads.filter((l) => l.created_at && l.created_at.startsWith(todayStr)).length
+    myCalls.filter((c) => c.created_at && c.created_at.startsWith(todayStr)).length,
+    myLeadsList.filter((l) => l.created_at && l.created_at.startsWith(todayStr)).length
   );
 
   const weekCalls = Math.max(
-    calls.filter((c) => c.created_at && c.created_at.split('T')[0] >= weekStartStr).length,
-    leads.filter((l) => l.created_at && l.created_at.split('T')[0] >= weekStartStr).length
+    myCalls.filter((c) => c.created_at && c.created_at.split('T')[0] >= weekStartStr).length,
+    myLeadsList.filter((l) => l.created_at && l.created_at.split('T')[0] >= weekStartStr).length
   );
 
   const monthCalls = Math.max(
-    calls.filter((c) => c.created_at && c.created_at.split('T')[0] >= monthStartStr).length,
-    leads.filter((l) => l.created_at && l.created_at.split('T')[0] >= monthStartStr).length
+    myCalls.filter((c) => c.created_at && c.created_at.split('T')[0] >= monthStartStr).length,
+    myLeadsList.filter((l) => l.created_at && l.created_at.split('T')[0] >= monthStartStr).length
   );
 
-  // Closes Breakdown ($199 vs $1,000)
-  const closes199 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length 
-    || leads.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
-  const closes1000 = calls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
+  // Closes Breakdown ($199 vs $1,000) scoped strictly to Worker profile
+  const closes199 = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length 
+    || myLeadsList.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
+  const closes1000 = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
 
   // Dynamic 7-Day Live Bar Chart Data (Lendi to Dimanch)
   const dayNames = ['Dimanch', 'Lendi', 'Madi', 'Mèkredi', 'Jedi', 'Vandredi', 'Samdi'];
@@ -371,8 +380,8 @@ export default function DashboardPage() {
     const dayLabel = dayNames[d.getDay()];
 
     const dayCallCount = Math.max(
-      calls.filter((c) => c.created_at && c.created_at.startsWith(dateStr)).length,
-      leads.filter((l) => l.created_at && l.created_at.startsWith(dateStr)).length
+      myCalls.filter((c) => c.created_at && c.created_at.startsWith(dateStr)).length,
+      myLeadsList.filter((l) => l.created_at && l.created_at.startsWith(dateStr)).length
     );
 
     return {
@@ -382,7 +391,7 @@ export default function DashboardPage() {
   });
 
   // Filtered Leads (Multi-criteria: status, search term, date range, assigned agent)
-  const filteredLeads = leads.filter((l) => {
+  const filteredLeads = myLeadsList.filter((l) => {
     // 1. Status Filter
     if (statusFilter !== 'all' && l.current_status !== statusFilter) return false;
 
@@ -604,8 +613,8 @@ export default function DashboardPage() {
         {activeTab === 'reports' && (
           <WorkerReportsView
             currentProfile={currentProfile}
-            myLeads={leads}
-            calls={calls}
+            myLeads={myLeadsList}
+            calls={myCalls}
             commissionConfig={commissionConfig}
           />
         )}
