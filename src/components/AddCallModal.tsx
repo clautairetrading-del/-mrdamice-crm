@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CallStatus, OfferProgram, Lead } from '@/types/crm';
 import { submitCallOrLead } from '@/lib/leadService';
 import { Phone, User, Mail, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
@@ -11,9 +11,10 @@ interface AddCallModalProps {
   onSuccess: () => void;
   myLeads: Lead[];
   agentId: string;
+  selectedLead?: Lead | null;
 }
 
-export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: AddCallModalProps) {
+export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, selectedLead }: AddCallModalProps) {
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   
@@ -30,6 +31,17 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
 
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'warning' | 'error'; msg: string } | null>(null);
+
+  // Auto-select lead by default when passed from action button
+  useEffect(() => {
+    if (selectedLead) {
+      setMode('existing');
+      setSelectedLeadId(selectedLead.id);
+      setPhone(selectedLead.phone);
+      setFullName(selectedLead.full_name);
+      setEmail(selectedLead.email || '');
+    }
+  }, [selectedLead, isOpen]);
 
   if (!isOpen) return null;
 
@@ -87,7 +99,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
         onSuccess();
         onClose();
         resetForm();
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setFeedback({
         type: 'error',
@@ -112,7 +124,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-gray-900 dark:text-gray-100 transition-all">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-gray-900 dark:text-gray-100 transition-all">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/80 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/80">
@@ -168,7 +180,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
                 value={selectedLeadId}
                 onChange={(e) => handleSelectLead(e.target.value)}
                 required
-                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 transition-colors"
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 transition-colors font-medium"
               >
                 <option value="">-- Chwazi yon lead nan lis la --</option>
                 {myLeads.map((lead) => (
@@ -185,7 +197,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
             <div className="space-y-3 bg-gray-50/80 dark:bg-gray-900/60 p-4 rounded-xl border border-gray-200 dark:border-gray-700/80">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
-                  NON OSWA SIYON (FULL NAME)
+                  NON AK SIYON (FULL NAME)
                 </label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
@@ -243,7 +255,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId }: A
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CallStatus)}
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-amber-500 font-semibold text-sm"
             >
               <option value="Poko rele">1. Poko rele</option>
               <option value="Pa jwenn li">2. Pa jwenn li</option>

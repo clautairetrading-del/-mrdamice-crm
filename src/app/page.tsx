@@ -475,6 +475,7 @@ export default function DashboardPage() {
         onSuccess={() => fetchSessionAndData()}
         myLeads={leads}
         agentId={currentProfile.id}
+        selectedLead={selectedLeadForCall}
       />
 
       {/* Add Lead Modal (Direct Manual Entry without page reload) */}
