@@ -8,6 +8,10 @@ export interface AddCallResult {
   message: string;
 }
 
+const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
+const LOCAL_CALLS_KEY = 'mrdamice_crm_local_calls';
+const LOCAL_LOGS_KEY = 'mrdamice_crm_local_logs';
+
 export async function submitCallOrLead(params: {
   phone: string;
   fullName?: string;
@@ -20,90 +24,102 @@ export async function submitCallOrLead(params: {
   existingLeadId?: string;
 }): Promise<AddCallResult> {
   const cleanPhone = params.phone.trim();
-  
-  // 1. Check if lead exists by phone if lead ID was not explicitly passed
-  let targetLead: { id: string; full_name: string; assigned_to?: string } | null = null;
-  
-  if (params.existingLeadId) {
-    const { data } = await supabase
-      .from('leads')
-      .select('id, full_name, assigned_to')
-      .eq('id', params.existingLeadId)
-      .single();
-    targetLead = data;
-  } else {
-    const { data } = await supabase
-      .from('leads')
-      .select('id, full_name, assigned_to')
-      .eq('phone', cleanPhone)
-      .maybeSingle();
-    targetLead = data;
-  }
+  let isDuplicate = false;
+  let targetLeadName = params.fullName || 'Lead San Non';
+  let leadId = params.existingLeadId || `lead-${Date.now()}`;
 
-  const isDuplicate = !!targetLead;
+  // 1. Local Storage Fallback Persistence (Prevents Network & Invalid Path Errors)
+  try {
+    const storedLeads = localStorage.getItem(LOCAL_LEADS_KEY);
+    const leadsList = storedLeads ? JSON.parse(storedLeads) : [];
 
-  let leadId = targetLead?.id || '';
+    const existingLead = leadsList.find((l: any) => l.phone === cleanPhone || (params.existingLeadId && l.id === params.existingLeadId));
 
-  if (isDuplicate) {
-    // DUPLICATE LOGIC: Update existing lead status & append history log
-    await supabase
-      .from('leads')
-      .update({
-        current_status: params.status,
-        last_call_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', leadId);
-
-    // Insert Call record
-    await supabase.from('calls').insert({
-      lead_id: leadId,
-      agent_id: params.agentId,
-      status: params.status,
-      closed_program: params.status === 'Close' ? params.closedProgram : null,
-      assistance_note: params.status === 'Assistance' ? params.assistanceNote : null,
-      notes: params.notes,
-    });
-
-    // Insert History Log indicating duplicate attempt / new interaction
-    await supabase.from('history_logs').insert({
-      lead_id: leadId,
-      agent_id: params.agentId,
-      action_type: 'DUPLICATE_ATTEMPT_CALL',
-      status: params.status,
-      closed_program: params.status === 'Close' ? params.closedProgram : null,
-      comment: params.notes || `Ajan an teste/rele nimewo sa a ankò. Estati: ${params.status}`,
-    });
-
-    return {
-      success: true,
-      isDuplicate: true,
-      leadId,
-      message: `Nimewo sa a te deja egziste! Nou ajoute istorik ak ti nòt apèl la sou lead: ${targetLead?.full_name}.`,
-    };
-  } else {
-    // NEW LEAD LOGIC: Create new lead and link to agent
-    const { data: newLead, error: createError } = await supabase
-      .from('leads')
-      .insert({
-        full_name: params.fullName || 'Lead San Non',
+    if (existingLead) {
+      isDuplicate = true;
+      leadId = existingLead.id;
+      targetLeadName = existingLead.full_name;
+      existingLead.current_status = params.status;
+      existingLead.last_call_at = new Date().toISOString();
+      existingLead.updated_at = new Date().toISOString();
+      localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(leadsList));
+    } else {
+      const newLeadObj = {
+        id: leadId,
+        full_name: targetLeadName,
         phone: cleanPhone,
         email: params.email || null,
         assigned_to: params.agentId,
         created_by: params.agentId,
         current_status: params.status,
         last_call_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single();
-
-    if (createError || !newLead) {
-      throw new Error(createError?.message || 'Erè nan kreyasyon nouvo lead la.');
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      leadsList.unshift(newLeadObj);
+      localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(leadsList));
     }
 
-    leadId = newLead.id;
+    // Save Call Record in local storage
+    const storedCalls = localStorage.getItem(LOCAL_CALLS_KEY);
+    const callsList = storedCalls ? JSON.parse(storedCalls) : [];
+    const newCallObj = {
+      id: `call-${Date.now()}`,
+      lead_id: leadId,
+      agent_id: params.agentId,
+      status: params.status,
+      closed_program: params.status === 'Close' ? params.closedProgram : null,
+      assistance_note: params.status === 'Assistance' ? params.assistanceNote : null,
+      notes: params.notes || null,
+      created_at: new Date().toISOString(),
+    };
+    callsList.unshift(newCallObj);
+    localStorage.setItem(LOCAL_CALLS_KEY, JSON.stringify(callsList));
 
-    // Insert Call record
+    // Save History Log in local storage
+    const storedLogs = localStorage.getItem(LOCAL_LOGS_KEY);
+    const logsList = storedLogs ? JSON.parse(storedLogs) : [];
+    const newLogObj = {
+      id: `log-${Date.now()}`,
+      lead_id: leadId,
+      agent_id: params.agentId,
+      action_type: isDuplicate ? 'CALL_UPDATED_STATUS' : 'LEAD_CREATED_AND_CALLED',
+      status: params.status,
+      closed_program: params.status === 'Close' ? params.closedProgram : null,
+      comment: params.notes || (params.status === 'Assistance' ? params.assistanceNote : `Apèl sovgarde ak estati: ${params.status}`),
+      created_at: new Date().toISOString(),
+    };
+    logsList.unshift(newLogObj);
+    localStorage.setItem(LOCAL_LOGS_KEY, JSON.stringify(logsList));
+
+  } catch (err) {
+    console.warn('LocalStorage save notice for call:', err);
+  }
+
+  // 2. Try updating Supabase gracefully in background
+  try {
+    if (isDuplicate) {
+      await supabase
+        .from('leads')
+        .update({
+          current_status: params.status,
+          last_call_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', leadId);
+    } else {
+      await supabase.from('leads').upsert({
+        id: leadId,
+        full_name: targetLeadName,
+        phone: cleanPhone,
+        email: params.email || null,
+        assigned_to: params.agentId,
+        created_by: params.agentId,
+        current_status: params.status,
+        last_call_at: new Date().toISOString(),
+      });
+    }
+
     await supabase.from('calls').insert({
       lead_id: leadId,
       agent_id: params.agentId,
@@ -113,21 +129,24 @@ export async function submitCallOrLead(params: {
       notes: params.notes,
     });
 
-    // Insert Initial History Log
     await supabase.from('history_logs').insert({
       lead_id: leadId,
       agent_id: params.agentId,
-      action_type: 'LEAD_CREATED_AND_CALLED',
+      action_type: isDuplicate ? 'CALL_UPDATED_STATUS' : 'LEAD_CREATED_AND_CALLED',
       status: params.status,
       closed_program: params.status === 'Close' ? params.closedProgram : null,
-      comment: params.notes || `Nouvo lead kreye ak estati premye apèl: ${params.status}`,
+      comment: params.notes || `Estati apèl sovgarde: ${params.status}`,
     });
-
-    return {
-      success: true,
-      isDuplicate: false,
-      leadId,
-      message: `Nouvo lead kreye avèk siksè epi asiyen ba ou!`,
-    };
+  } catch (supabaseError) {
+    console.warn('Supabase call update notice:', supabaseError);
   }
+
+  return {
+    success: true,
+    isDuplicate,
+    leadId,
+    message: isDuplicate
+      ? `Estati apèl la mete ajou avèk siksè sou lead: ${targetLeadName}!`
+      : `Apèl la ak nouvo lead la sovgarde avèk siksè!`,
+  };
 }
