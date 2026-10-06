@@ -6,9 +6,9 @@ import { Profile, Lead, Call, HistoryLog } from '@/types/crm';
 import { AddCallModal } from '@/components/AddCallModal';
 import { AddLeadModal } from '@/components/AddLeadModal';
 import { ImportCSVModal } from '@/components/ImportCSVModal';
+import { HistoryLogModal } from '@/components/HistoryLogModal';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
-import { HistoryLogViewer } from '@/components/HistoryLogViewer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
 import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus } from 'lucide-react';
@@ -22,6 +22,8 @@ export default function DashboardPage() {
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
   const [isImportCSVOpen, setIsImportCSVOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
   const [selectedLeadForLogs, setSelectedLeadForLogs] = useState<Lead | null>(null);
   const [selectedLeadForCall, setSelectedLeadForCall] = useState<Lead | null>(null);
 
@@ -86,10 +88,9 @@ export default function DashboardPage() {
     setLoading(false);
   };
 
-  // Helper to instantly append a newly created lead in local state without reloading
+  // Helper to instantly append a newly created lead in local state without reloading or refreshing
   const handleAddNewLeadLocally = (newLead: Lead) => {
     setLeads((prevLeads) => {
-      // Check if lead already exists in state by phone or id
       const exists = prevLeads.some((l) => l.phone === newLead.phone || l.id === newLead.id);
       if (exists) return prevLeads;
       return [newLead, ...prevLeads];
@@ -105,8 +106,10 @@ export default function DashboardPage() {
     setCurrentProfile(null);
   };
 
-  const fetchLeadLogs = async (lead: Lead) => {
+  const fetchLeadLogsModal = async (lead: Lead) => {
     setSelectedLeadForLogs(lead);
+    setIsHistoryModalOpen(true);
+
     const { data } = await supabase
       .from('history_logs')
       .select('*, agent:profiles(*)')
@@ -402,7 +405,7 @@ export default function DashboardPage() {
                               Ajoute Apèl (Set Status)
                             </button>
                             <button
-                              onClick={() => fetchLeadLogs(lead)}
+                              onClick={() => fetchLeadLogsModal(lead)}
                               className="inline-flex items-center gap-1.5 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg transition-colors font-medium"
                             >
                               <Eye className="w-3.5 h-3.5 text-amber-500" />
@@ -416,19 +419,6 @@ export default function DashboardPage() {
                 </table>
               </div>
             </div>
-
-            {/* History Log Modal / Section */}
-            {selectedLeadForLogs && (
-              <div className="pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-gray-900 dark:text-white">Dènye aksyon ak istorik sou: {selectedLeadForLogs.full_name}</h3>
-                  <button onClick={() => setSelectedLeadForLogs(null)} className="text-xs text-rose-500 hover:underline font-semibold">
-                    Fèmen Istorik Log
-                  </button>
-                </div>
-                <HistoryLogViewer logs={historyLogs} />
-              </div>
-            )}
           </div>
         )}
 
@@ -465,7 +455,7 @@ export default function DashboardPage() {
         agentId={currentProfile.id}
       />
 
-      {/* Add Lead Modal (Direct Manual Entry) */}
+      {/* Add Lead Modal (Direct Manual Entry without page reload) */}
       <AddLeadModal
         isOpen={isAddLeadOpen}
         onClose={() => setIsAddLeadOpen(false)}
@@ -473,7 +463,6 @@ export default function DashboardPage() {
           if (createdLead) {
             handleAddNewLeadLocally(createdLead);
           }
-          fetchSessionAndData();
         }}
         agentId={currentProfile.id}
       />
@@ -484,6 +473,14 @@ export default function DashboardPage() {
         onClose={() => setIsImportCSVOpen(false)}
         onSuccess={() => fetchSessionAndData()}
         agentId={currentProfile.id}
+      />
+
+      {/* History Log Modal */}
+      <HistoryLogModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        lead={selectedLeadForLogs}
+        logs={historyLogs}
       />
     </div>
   );
