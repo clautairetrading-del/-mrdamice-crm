@@ -37,14 +37,21 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'warning' | 'error'; msg: string } | null>(null);
 
-  // Auto-select lead by default when passed from action button
+  // Auto-select lead ONLY when passed from a specific lead's Action button in table/calendar
   useEffect(() => {
-    if (selectedLead) {
+    if (selectedLead && isOpen) {
       setMode('existing');
       setSelectedLeadId(selectedLead.id);
       setPhone(selectedLead.phone);
       setFullName(selectedLead.full_name);
       setEmail(selectedLead.email || '');
+    } else if (isOpen && !selectedLead) {
+      // If opened from top global Add Call button, leave selection EMPTY by default
+      setMode('existing');
+      setSelectedLeadId('');
+      setPhone('');
+      setFullName('');
+      setEmail('');
     }
   }, [selectedLead, isOpen]);
 
@@ -57,6 +64,10 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
       setPhone(found.phone);
       setFullName(found.full_name);
       setEmail(found.email || '');
+    } else {
+      setPhone('');
+      setFullName('');
+      setEmail('');
     }
   };
 
