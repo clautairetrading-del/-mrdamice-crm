@@ -67,9 +67,141 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
 
   const conversionRate = totalCallsCount > 0 ? ((totalCloses / totalCallsCount) * 100).toFixed(1) : '0';
 
-  // Export Report via Native Browser Print/PDF
+  // Generate pure vector PDF document with formatted table without capturing UI screenshot
   const handleExportPDF = () => {
-    window.print();
+    const reportTitle = `RAPO_TRAVAY_${currentProfile.full_name.replace(/\s+/g, '_')}_${timeRange.toUpperCase()}_${todayStr}`;
+    
+    // Prepare table rows from filtered records
+    let tableRowsHTML = '';
+    
+    if (filteredCalls.length > 0) {
+      filteredCalls.forEach((call) => {
+        const leadObj = myLeads.find((l) => l.id === call.lead_id);
+        const name = leadObj?.full_name || call.lead?.full_name || 'Lead Ajan';
+        const phone = leadObj?.phone || call.lead?.phone || '-';
+        const date = call.created_at ? call.created_at.replace('T', ' ').slice(0, 16) : todayStr;
+        const note = call.closed_program || call.assistance_note || call.notes || '-';
+        
+        tableRowsHTML += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace;">${date}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${name}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace; color: #d97706;">${phone}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${call.status}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${note}</td>
+          </tr>
+        `;
+      });
+    } else if (filteredLeads.length > 0) {
+      filteredLeads.forEach((lead) => {
+        const name = lead.full_name;
+        const phone = lead.phone;
+        const date = lead.created_at ? lead.created_at.replace('T', ' ').slice(0, 16) : todayStr;
+        const note = lead.email || 'Lead anrejistre';
+        
+        tableRowsHTML += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace;">${date}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${name}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace; color: #d97706;">${phone}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${lead.current_status}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${note}</td>
+          </tr>
+        `;
+      });
+    } else {
+      tableRowsHTML = `
+        <tr>
+          <td colspan="5" style="padding: 16px; text-align: center; color: #888;">Pa gen okenn done anrejistre pou peryòd sa (${timeRange}).</td>
+        </tr>
+      `;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${reportTitle}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 30px; color: #111827; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f59e0b; padding-bottom: 15px; margin-bottom: 25px; }
+            .brand { font-size: 22px; font-weight: 900; color: #111827; }
+            .brand span { color: #f59e0b; }
+            .meta { text-align: right; font-size: 12px; color: #4b5563; }
+            .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+            .metric-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 15px; text-align: center; }
+            .metric-title { font-size: 10px; font-weight: bold; color: #6b7280; text-transform: uppercase; }
+            .metric-val { font-size: 24px; font-weight: 900; color: #d97706; margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+            th { background: #f3f4f6; padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 11px; text-transform: uppercase; color: #374151; }
+            .footer { margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 15px; font-size: 10px; color: #9ca3af; display: flex; justify-content: space-between; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="brand">MR DAMICE <span>CRM SALES REPORT</span></div>
+              <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Rapò Pèfòmans Ak Ekstraksyon Done Ajan Sales</div>
+            </div>
+            <div class="meta">
+              <strong style="font-size: 14px; color: #111827;">${currentProfile.full_name}</strong><br/>
+              <span>Ròl: ${currentProfile.role.toUpperCase()}</span><br/>
+              <span>Peryòd: ${timeRange.toUpperCase()} (${todayStr})</span>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-title">Total Apèl / Leads</div>
+              <div class="metric-val">${totalCallsCount}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Ventes (Closes)</div>
+              <div class="metric-val" style="color: #059669;">${totalCloses}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Chiffre d'Affaires</div>
+              <div class="metric-val" style="color: #2563eb;">$${totalRevenue.toLocaleString()} USD</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Conversion Rate</div>
+              <div class="metric-val" style="color: #7c3aed;">${conversionRate}%</div>
+            </div>
+          </div>
+
+          <h4 style="margin-bottom: 5px; font-size: 13px; text-transform: uppercase; color: #111827;">📋 EKSTRAKSYON DONE LEADS AK APÈL YO</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Dat ak Lè</th>
+                <th>Moun / Lead</th>
+                <th>Nimewo Telefòn</th>
+                <th>Estati</th>
+                <th style="text-align: right;">Imèl / Pwogram / Nòt</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHTML}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <span>MR DAMICE CRM PLATFORM - DOKIMAN OTO-JENERE POU DOKIMANTASYON</span>
+            <span>Konfime pa Ajan: ${currentProfile.full_name}</span>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
