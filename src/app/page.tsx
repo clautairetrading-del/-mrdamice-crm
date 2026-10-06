@@ -796,13 +796,33 @@ export default function DashboardPage() {
                           assignedProfile = creatorProfile;
                         }
 
-                        const creatorName = creatorProfile?.full_name 
-                          ? creatorProfile.full_name 
-                          : (lead.created_by ? lead.created_by : (lead.email ? lead.email.split('@')[0] : 'User Test'));
+                        let creatorName = 'User Test Worker';
+                        if (creatorProfile?.full_name) {
+                          creatorName = creatorProfile.full_name;
+                        } else if (lead.created_by) {
+                          const matchedProf = allProfiles.find((p) => p.id === lead.created_by || p.email === lead.created_by);
+                          if (matchedProf?.full_name) {
+                            creatorName = matchedProf.full_name;
+                          } else if (lead.created_by.includes('worker') || lead.created_by.includes('user')) {
+                            creatorName = 'User Test Worker';
+                          } else if (!lead.created_by.includes('-')) {
+                            creatorName = lead.created_by;
+                          }
+                        }
 
-                        const assignedName = assignedProfile?.full_name 
-                          ? assignedProfile.full_name 
-                          : (lead.assigned_to ? lead.assigned_to : (lead.email ? lead.email.split('@')[0] : 'User Test'));
+                        let assignedName = 'User Test Worker';
+                        if (assignedProfile?.full_name) {
+                          assignedName = assignedProfile.full_name;
+                        } else if (lead.assigned_to) {
+                          const matchedProf = allProfiles.find((p) => p.id === lead.assigned_to || p.email === lead.assigned_to);
+                          if (matchedProf?.full_name) {
+                            assignedName = matchedProf.full_name;
+                          } else if (lead.assigned_to.includes('worker') || lead.assigned_to.includes('user')) {
+                            assignedName = 'User Test Worker';
+                          } else if (!lead.assigned_to.includes('-')) {
+                            assignedName = lead.assigned_to;
+                          }
+                        }
 
                         return (
                           <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
