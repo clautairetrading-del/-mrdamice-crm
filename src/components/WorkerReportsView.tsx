@@ -3,8 +3,6 @@
 import React, { useState, useRef } from 'react';
 import { Lead, Call, Profile } from '@/types/crm';
 import { FileText, Download, Calendar, PhoneCall, CheckCircle2, Award, TrendingUp, Clock } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface WorkerReportsViewProps {
   currentProfile: Profile;
@@ -56,32 +54,9 @@ export function WorkerReportsView({ currentProfile, myLeads, calls }: WorkerRepo
 
   const conversionRate = totalCallsCount > 0 ? ((totalCloses / totalCallsCount) * 100).toFixed(1) : '0';
 
-  // Export Report to PDF function
-  const handleExportPDF = async () => {
-    if (!reportRef.current) return;
-    setIsExporting(true);
-
-    try {
-      const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Rappò_Pèfòmans_${currentProfile.full_name.replace(/\s+/g, '_')}_${timeRange.toUpperCase()}_${todayStr}.pdf`);
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      alert('Erè nan jenere fichye PDF la.');
-    } finally {
-      setIsExporting(false);
-    }
+  // Export Report via Native Browser Print/PDF
+  const handleExportPDF = () => {
+    window.print();
   };
 
   return (
