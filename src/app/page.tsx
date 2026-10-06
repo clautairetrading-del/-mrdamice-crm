@@ -49,6 +49,7 @@ export default function DashboardPage() {
 
     let activeUser = userProfile || currentProfile;
 
+    // Check Supabase Auth Session first
     if (!activeUser) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -61,10 +62,29 @@ export default function DashboardPage() {
       }
     }
 
+    // Persistent Local Session Fallback: keep user logged in on page refresh unless logout is clicked
+    if (!activeUser) {
+      try {
+        const storedProfile = localStorage.getItem('mrdamice_crm_active_profile');
+        if (storedProfile) {
+          activeUser = JSON.parse(storedProfile);
+        }
+      } catch (e) {
+        console.warn('Local session read error:', e);
+      }
+    }
+
     if (!activeUser) {
       setCurrentProfile(null);
       setLoading(false);
       return;
+    }
+
+    // Save active profile to localStorage to guarantee persistent login on refresh
+    try {
+      localStorage.setItem('mrdamice_crm_active_profile', JSON.stringify(activeUser));
+    } catch (e) {
+      console.warn('Local session save error:', e);
     }
 
     setCurrentProfile(activeUser);
@@ -125,6 +145,11 @@ export default function DashboardPage() {
       await supabase.auth.signOut();
     } catch (e) {
       // ignore offline signout errors
+    }
+    try {
+      localStorage.removeItem('mrdamice_crm_active_profile');
+    } catch (e) {
+      console.warn('Local session remove error:', e);
     }
     setCurrentProfile(null);
   };
