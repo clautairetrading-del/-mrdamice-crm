@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   BarChart,
   Bar,
@@ -13,8 +14,10 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { PhoneCall, Sparkles, TrendingUp, DollarSign, CheckCircle2 } from 'lucide-react';
 
 interface WorkerPerformanceProps {
+  agentName: string;
   todayCalls: number;
   weekCalls: number;
   monthCalls: number;
@@ -24,6 +27,7 @@ interface WorkerPerformanceProps {
 }
 
 export function WorkerDashboardCharts({
+  agentName,
   todayCalls,
   weekCalls,
   monthCalls,
@@ -37,13 +41,53 @@ export function WorkerDashboardCharts({
   const totalRevenue = commission199 + commission1000;
 
   const pieData = [
-    { name: 'Fòmasyon $199', value: closes199, color: '#f59e0b' }, // Amber-500
-    { name: 'Done For You $1k', value: closes1000, color: '#d97706' }, // Amber-600
+    { name: 'Fòmasyon $199', value: closes199, color: '#f59e0b' },
+    { name: 'Done For You $1k', value: closes1000, color: '#d97706' },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       
+      {/* Elegant Welcome Banner with Image */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 dark:border-amber-500/30 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="space-y-3 z-10 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" />
+            Espace Worker Sales & Closing
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight">
+            Byenvini sou CRM la, <span className="text-amber-600 dark:text-amber-400">{agentName}</span>! 👋
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            Ann fè gwo chif jodi a! Swiv apèl ou yo, jere leads ou yo an tan reyèl, epi kalkile komisyon ou yo fasilman sou chak close.
+          </p>
+          <div className="flex flex-wrap items-center gap-4 pt-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              Objectif lavant fikse
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
+              <TrendingUp className="w-4 h-4 text-amber-500" />
+              Komisyon aktif
+            </div>
+          </div>
+        </div>
+
+        {/* Welcome Image Container */}
+        <div className="relative w-full md:w-64 h-44 rounded-2xl overflow-hidden shadow-lg border-2 border-amber-500/30 shrink-0">
+          <Image
+            src="/images/welcome.jpg"
+            alt="Welcome to Mr Damice CRM"
+            fill
+            className="object-cover hover:scale-105 transition-transform duration-500"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3">
+            <span className="text-white text-xs font-bold tracking-wide drop-shadow">Mr Damice Closing Team</span>
+          </div>
+        </div>
+      </div>
+
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 p-5 rounded-2xl shadow-sm dark:shadow-none">

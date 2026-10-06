@@ -249,6 +249,7 @@ export default function DashboardPage() {
         {/* Tab 1: Dashboard */}
         {activeTab === 'dashboard' && (
           <WorkerDashboardCharts
+            agentName={currentProfile.full_name}
             todayCalls={todayCalls}
             weekCalls={weekCalls}
             monthCalls={monthCalls}
