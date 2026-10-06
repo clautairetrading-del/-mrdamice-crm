@@ -46,7 +46,6 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
       setFullName(selectedLead.full_name);
       setEmail(selectedLead.email || '');
     } else if (isOpen && !selectedLead) {
-      // If opened from top global Add Call button, leave selection EMPTY by default
       setMode('existing');
       setSelectedLeadId('');
       setPhone('');
@@ -129,26 +128,21 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
         console.warn('Local lead update notice:', e);
       }
 
+      // Display green success feedback inside the modal and trigger background state sync without reloading or closing modal
       setFeedback({
         type: 'success',
-        msg: res.message || 'Apèl la sovgarde avèk siksè nan sistèm nan!',
+        msg: res.message || 'Apèl la ak estati a sovgarde avèk siksè!',
       });
 
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-        resetForm();
-      }, 1200);
+      // Synchronize list data in background without page refresh or automatic modal closing
+      onSuccess();
+
     } catch (err: any) {
       setFeedback({
         type: 'success',
-        msg: `Estati apèl la (${status}) sovgarde avèk siksè nan sistèm nan!`,
+        msg: `Estati apèl la (${status}) sovgarde avèk siksè!`,
       });
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-        resetForm();
-      }, 1200);
+      onSuccess();
     } finally {
       setLoading(false);
     }
@@ -415,7 +409,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
             />
           </div>
 
-          {/* Feedback banner */}
+          {/* Feedback banner - Always green for success messages */}
           {feedback && (
             <div
               className={`p-3.5 rounded-xl text-sm flex items-start gap-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold`}
@@ -432,7 +426,7 @@ export function AddCallModal({ isOpen, onClose, onSuccess, myLeads, agentId, sel
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-semibold transition-colors"
             >
-              Anule
+              Fèmen Bwat sa a
             </button>
             <button
               type="submit"

@@ -95,11 +95,9 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
         msg: 'Nouvo lead la kreye ak nimewo entènasyonal li sovgarde avèk siksè!',
       });
 
-      setTimeout(() => {
-        onSuccess(newLeadObj);
-        onClose();
-        resetForm();
-      }, 1000);
+      // Synchronize parent state in background while keeping the modal open so user stays in modal
+      onSuccess(newLeadObj);
+
     } catch (err: any) {
       setFeedback({
         type: 'error',
@@ -219,7 +217,7 @@ export function AddLeadModal({ isOpen, onClose, onSuccess, agentId }: AddLeadMod
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-semibold transition-colors"
             >
-              Anule
+              Fèmen Bwat sa a
             </button>
             <button
               type="submit"
