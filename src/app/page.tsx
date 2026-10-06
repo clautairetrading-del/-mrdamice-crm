@@ -912,6 +912,13 @@ export default function DashboardPage() {
         onClose={() => setIsHistoryModalOpen(false)}
         lead={selectedLeadForLogs}
         logs={historyLogs}
+        creatorAgentName={
+          selectedLeadForLogs
+            ? (allProfiles.find((p) => (selectedLeadForLogs.created_by && p.id === selectedLeadForLogs.created_by) || (selectedLeadForLogs.assigned_to && p.id === selectedLeadForLogs.assigned_to))?.full_name 
+               || selectedLeadForLogs.assigned_agent?.full_name 
+               || 'Ajan Worker')
+            : 'Ajan Worker'
+        }
       />
     </div>
   );

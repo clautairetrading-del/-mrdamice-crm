@@ -9,9 +9,10 @@ interface HistoryLogModalProps {
   onClose: () => void;
   lead: Lead | null;
   logs: HistoryLog[];
+  creatorAgentName?: string;
 }
 
-export function HistoryLogModal({ isOpen, onClose, lead, logs }: HistoryLogModalProps) {
+export function HistoryLogModal({ isOpen, onClose, lead, logs, creatorAgentName }: HistoryLogModalProps) {
   if (!isOpen || !lead) return null;
 
   return (
@@ -61,7 +62,7 @@ export function HistoryLogModal({ isOpen, onClose, lead, logs }: HistoryLogModal
                 <User className="w-4 h-4 text-amber-500 shrink-0" />
                 <span className="font-semibold">Kiyès ki ajoute lead sa a:</span>
                 <span className="font-bold text-gray-900 dark:text-white bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
-                  {lead.assigned_agent?.full_name || 'Ajan Kreyatè'}
+                  {creatorAgentName || lead.assigned_agent?.full_name || 'Ajan Worker'}
                 </span>
               </div>
 
