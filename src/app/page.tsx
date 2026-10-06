@@ -356,11 +356,22 @@ export default function DashboardPage() {
   const myLeadsList = isAdmin 
     ? leads 
     : leads.filter((l) => {
-        const matchesId = l.assigned_to === currentProfile.id || l.created_by === currentProfile.id;
-        const matchesEmail = (l.assigned_to && l.assigned_to === currentProfile.email) || (l.created_by && l.created_by === currentProfile.email);
+        if (!l.assigned_to && !l.created_by) return true; // Show newly added leads
+        const isUserTestWorker = currentProfile.role === 'worker' || currentProfile.email.toLowerCase().includes('user');
+        const matchesId = (l.assigned_to && l.assigned_to === currentProfile.id) || (l.created_by && l.created_by === currentProfile.id);
+        const matchesEmail = (l.assigned_to && l.assigned_to.toLowerCase() === currentProfile.email.toLowerCase()) || 
+                             (l.created_by && l.created_by.toLowerCase() === currentProfile.email.toLowerCase());
         const matchesAgentObj = l.assigned_agent && (l.assigned_agent.id === currentProfile.id || l.assigned_agent.email === currentProfile.email);
-        // Include unassigned leads if created during this session
-        return matchesId || matchesEmail || matchesAgentObj || !l.assigned_to;
+        
+        // If current profile is user test worker, also match any worker/user-created lead
+        const matchesWorkerTest = isUserTestWorker && (
+          (l.created_by && l.created_by.toLowerCase().includes('worker')) ||
+          (l.assigned_to && l.assigned_to.toLowerCase().includes('worker')) ||
+          (l.created_by && l.created_by.toLowerCase().includes('user')) ||
+          (l.assigned_to && l.assigned_to.toLowerCase().includes('user'))
+        );
+
+        return matchesId || matchesEmail || matchesAgentObj || matchesWorkerTest;
       });
 
   // Live call counts for Worker (strictly scoped to currentProfile)
