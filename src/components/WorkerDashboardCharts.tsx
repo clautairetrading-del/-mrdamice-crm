@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { PhoneCall, Sparkles, TrendingUp, DollarSign, CheckCircle2 } from 'lucide-react';
+import { CommissionConfig, DEFAULT_COMMISSION_CONFIG } from '@/types/crm';
 
 interface WorkerPerformanceProps {
   agentName: string;
@@ -24,6 +24,7 @@ interface WorkerPerformanceProps {
   closes199: number;
   closes1000: number;
   dailyStatsData: { date: string; calls: number }[];
+  commissionConfig?: CommissionConfig;
 }
 
 export function WorkerDashboardCharts({
@@ -34,15 +35,20 @@ export function WorkerDashboardCharts({
   closes199,
   closes1000,
   dailyStatsData,
+  commissionConfig = DEFAULT_COMMISSION_CONFIG,
 }: WorkerPerformanceProps) {
-  // Commission Calculations
-  const commission199 = closes199 * 199;
-  const commission1000 = closes1000 * 1000;
-  const totalRevenue = commission199 + commission1000;
+  // Dynamic Calculations using Admin Commission & Price Config
+  const rev199 = closes199 * commissionConfig.price199;
+  const rev1000 = closes1000 * commissionConfig.price1000;
+  const totalRevenue = rev199 + rev1000;
+
+  const agentCommission199 = rev199 * (commissionConfig.rate199 / 100);
+  const agentCommission1000 = rev1000 * (commissionConfig.rate1000 / 100);
+  const totalAgentCommission = agentCommission199 + agentCommission1000;
 
   const pieData = [
-    { name: 'Fòmasyon $199', value: closes199, color: '#f59e0b' },
-    { name: 'Done For You $1k', value: closes1000, color: '#d97706' },
+    { name: `Fòmasyon $${commissionConfig.price199}`, value: closes199, color: '#f59e0b' },
+    { name: `Done For You $${commissionConfig.price1000}`, value: closes1000, color: '#d97706' },
   ];
 
   return (
@@ -101,15 +107,15 @@ export function WorkerDashboardCharts({
         </div>
 
         <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 p-5 rounded-2xl shadow-sm dark:shadow-none">
-          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">Apèl Mwa sa a</p>
-          <p className="text-3xl font-extrabold text-gray-800 dark:text-gray-200 mt-1">{monthCalls}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">Revenu Total Antrepriz</p>
+          <p className="text-3xl font-extrabold text-gray-800 dark:text-gray-200 mt-1">${totalRevenue.toLocaleString()} USD</p>
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-500/30 p-5 rounded-2xl shadow-sm">
-          <p className="text-amber-700 dark:text-amber-400 text-xs font-semibold uppercase tracking-wider">Total Close / Revenue</p>
-          <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">${totalRevenue.toLocaleString()} USD</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-            {closes199}x ($199) | {closes1000}x ($1,000)
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30 p-5 rounded-2xl shadow-sm">
+          <p className="text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">Komisyon Ou Touche</p>
+          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">${totalAgentCommission.toLocaleString()} USD</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 font-medium">
+            ({commissionConfig.rate199}% ak {commissionConfig.rate1000}% sou closes)
           </p>
         </div>
       </div>

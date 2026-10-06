@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Profile, Lead, Call, HistoryLog } from '@/types/crm';
+import { Profile, Lead, Call, HistoryLog, CommissionConfig, DEFAULT_COMMISSION_CONFIG } from '@/types/crm';
 import { AddCallModal } from '@/components/AddCallModal';
 import { AddLeadModal } from '@/components/AddLeadModal';
 import { ImportCSVModal } from '@/components/ImportCSVModal';
@@ -16,11 +16,35 @@ import { AuthScreen } from '@/components/AuthScreen';
 import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText } from 'lucide-react';
 
 const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
+const COMMISSION_CONFIG_KEY = 'mrdamice_crm_commission_config';
 
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin'>('dashboard');
+
+  // Dynamic Commission & Pricing Config State
+  const [commissionConfig, setCommissionConfig] = useState<CommissionConfig>(DEFAULT_COMMISSION_CONFIG);
+
+  useEffect(() => {
+    try {
+      const savedConfig = localStorage.getItem(COMMISSION_CONFIG_KEY);
+      if (savedConfig) {
+        setCommissionConfig(JSON.parse(savedConfig));
+      }
+    } catch (e) {
+      console.warn('Commission config load error:', e);
+    }
+  }, []);
+
+  const handleUpdateCommissionConfig = (newConfig: CommissionConfig) => {
+    setCommissionConfig(newConfig);
+    try {
+      localStorage.setItem(COMMISSION_CONFIG_KEY, JSON.stringify(newConfig));
+    } catch (e) {
+      console.warn('Commission config save error:', e);
+    }
+  };
 
   // Modal States
   const [isAddCallOpen, setIsAddCallOpen] = useState(false);
@@ -540,6 +564,7 @@ export default function DashboardPage() {
             closes199={closes199}
             closes1000={closes1000}
             dailyStatsData={dailyStatsData}
+            commissionConfig={commissionConfig}
           />
         )}
 
@@ -549,6 +574,7 @@ export default function DashboardPage() {
             currentProfile={currentProfile}
             myLeads={leads}
             calls={calls}
+            commissionConfig={commissionConfig}
           />
         )}
 
@@ -748,16 +774,36 @@ export default function DashboardPage() {
             onlineAgents={allProfiles.filter((p) => p.is_online)}
             allAgents={allProfiles}
             totalTeamCalls={calls.length}
-            agentReports={allProfiles.map((p) => ({
-              agent: p,
-              todayCalls: calls.filter((c) => c.agent_id === p.id && c.created_at.startsWith(todayStr)).length,
-              weekCalls: calls.filter((c) => c.agent_id === p.id).length,
-              monthCalls: calls.filter((c) => c.agent_id === p.id).length,
-              closesCount: calls.filter((c) => c.agent_id === p.id && c.status === 'Close').length,
-              revenue: calls
-                .filter((c) => c.agent_id === p.id && c.status === 'Close')
-                .reduce((sum, c) => sum + (c.closed_program === 'Done For You $1,000 USD' ? 1000 : 199), 0),
-            }))}
+            commissionConfig={commissionConfig}
+            onUpdateCommissionConfig={handleUpdateCommissionConfig}
+            agentReports={allProfiles.map((p) => {
+              const agentCalls = calls.filter((c) => c.agent_id === p.id);
+              const agentLeads = leads.filter((l) => l.assigned_to === p.id);
+
+              const closes199Count = agentCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length;
+              const closes1000Count = agentCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
+
+              const totalClosesCount = Math.max(
+                agentCalls.filter((c) => c.status === 'Close' || c.status === 'Assistance').length,
+                agentLeads.filter((l) => l.current_status === 'Close' || l.current_status === 'Assistance').length
+              );
+
+              const revenue = (closes199Count * commissionConfig.price199) + (closes1000Count * commissionConfig.price1000);
+              
+              // Dynamic commission calculation based on Admin Config percentage rates
+              const commissionEarned = ((closes199Count * commissionConfig.price199) * (commissionConfig.rate199 / 100)) + 
+                                       ((closes1000Count * commissionConfig.price1000) * (commissionConfig.rate1000 / 100));
+
+              return {
+                agent: p,
+                todayCalls: agentCalls.filter((c) => c.created_at && c.created_at.startsWith(todayStr)).length,
+                weekCalls: agentCalls.length,
+                monthCalls: agentCalls.length,
+                closesCount: totalClosesCount,
+                revenue: revenue || (totalClosesCount * commissionConfig.price199),
+                commissionEarned: commissionEarned || ((totalClosesCount * commissionConfig.price199) * (commissionConfig.rate199 / 100)),
+              };
+            })}
           />
         )}
 

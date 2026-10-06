@@ -13,6 +13,20 @@ export type OfferProgram =
   | 'Fòmasyon $199 USD'
   | 'Done For You $1,000 USD';
 
+export interface CommissionConfig {
+  price199: number;
+  rate199: number; // percentage e.g. 15 for 15%
+  price1000: number;
+  rate1000: number; // percentage e.g. 20 for 20%
+}
+
+export const DEFAULT_COMMISSION_CONFIG: CommissionConfig = {
+  price199: 199,
+  rate199: 15,
+  price1000: 1000,
+  rate1000: 20,
+};
+
 export interface Profile {
   id: string;
   full_name: string;
