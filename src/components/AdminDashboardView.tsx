@@ -431,7 +431,7 @@ export function AdminDashboardView({
                       {log.created_at ? log.created_at.replace('T', ' ').slice(0, 16) : '-'}
                     </td>
                     <td className="p-3 font-bold text-amber-600 dark:text-amber-400">
-                      {log.agent?.full_name || 'Ajan Worker'}
+                      {log.agent?.full_name || 'Anplwaye'}
                     </td>
                     <td className="p-3 font-semibold text-gray-900 dark:text-white">
                       {log.action_type}

@@ -773,11 +773,11 @@ export default function DashboardPage() {
 
                         const creatorName = creatorProfile?.full_name 
                           ? creatorProfile.full_name 
-                          : 'Ajan Worker';
+                          : (lead.assigned_agent?.full_name || currentProfile.full_name);
 
                         const assignedName = assignedProfile?.full_name 
                           ? assignedProfile.full_name 
-                          : 'Ajan Worker';
+                          : (lead.assigned_agent?.full_name || currentProfile.full_name);
 
                         return (
                           <tr key={lead.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
