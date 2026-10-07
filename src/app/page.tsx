@@ -458,7 +458,7 @@ export default function DashboardPage() {
         const localCalls: Call[] = JSON.parse(storedCalls);
         const existingCallIds = new Set(fetchedCalls.map((c) => c.id));
         localCalls.forEach((c) => {
-          if (!existingCallIds.has(c.id)) {
+          if (!existingCallIds.has(c.id) && c.id !== 'call-demo-3') {
             fetchedCalls.unshift(c);
           }
         });
