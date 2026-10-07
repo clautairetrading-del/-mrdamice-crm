@@ -238,62 +238,7 @@ export function AdminDashboardView({
 
       </div>
 
-      {/* 2. EXPLICIT SALES & CLOSERS BREAKDOWN (Konbyen Fòmasyon ki Vann Ak Kiyès ki Clos Yo) */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-amber-500" />
-              Detay Fòmasyon Ki Vann Ak Ajan Ki Clos Yo (Sales & Closers Report)
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Montre presizeman ki pwogram fòmasyon ki vann, ki lead ki achte l, ak ki Worker ki fè closing la.
-            </p>
-          </div>
-          <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold px-3 py-1 rounded-full">
-            2 Lavant Konfime ($1,199 USD)
-          </span>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
-            <thead className="bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs">
-              <tr>
-                <th className="px-6 py-4">Pwogram Fòmasyon</th>
-                <th className="px-6 py-4">Pri Vant ($)</th>
-                <th className="px-6 py-4">Kliyan Achte (Lead)</th>
-                <th className="px-6 py-4">Ajan ki Clos L (Closer)</th>
-                <th className="px-6 py-4 text-right">Komisyon Ajan an Touche</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700 font-medium">
-              {salesBreakdownList.map((sale) => (
-                <tr key={sale.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
-                  <td className="px-6 py-4 font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    {sale.programName}
-                  </td>
-                  <td className="px-6 py-4 font-mono font-bold text-amber-600 dark:text-amber-400">
-                    ${sale.price.toLocaleString()} USD
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-semibold text-gray-900 dark:text-white">{sale.leadName}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">{sale.phone}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2.5 py-1 rounded-lg text-xs font-bold border border-amber-200 dark:border-amber-800/60">
-                      👤 {sale.closerName}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-                    ${sale.commissionEarned.toLocaleString()} USD ({sale.price === 199 ? commissionConfig.rate199 : commissionConfig.rate1000}%)
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* 3. ADMIN PRICING & COMMISSION CONFIGURATION */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 p-6 rounded-3xl shadow-sm space-y-4">
