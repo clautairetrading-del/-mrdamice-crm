@@ -510,9 +510,9 @@ export function AdminDashboardView({
 
               // Dynamic real system calculations
               const todayLeadsCount = workerLeads.filter((l) => l.created_at && l.created_at.startsWith(todayStr)).length;
-              const closedLeadsCount = workerReport?.closesCount || workerLeads.filter((l) => l.current_status === 'Close' || l.current_status === 'Assistance').length;
-              const revenue = workerReport?.revenue || 1199;
-              const commEarned = workerReport?.commissionEarned || 229.85;
+              const closedLeadsCount = workerLeads.filter((l) => l.current_status === 'Close').length;
+              const revenue = workerReport ? workerReport.revenue : 1199;
+              const commEarned = workerReport ? workerReport.commissionEarned : 229.85;
 
               return (
                 <div className="space-y-5">

@@ -74,7 +74,7 @@ const INITIAL_DEMO_LEADS: Lead[] = [
     current_status: 'Gen follow up',
     followup_date: new Date().toISOString().split('T')[0],
     followup_time: '14:30',
-    created_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
@@ -85,7 +85,7 @@ const INITIAL_DEMO_LEADS: Lead[] = [
     assigned_to: 'worker-usertestdamicecom',
     created_by: 'worker-usertestdamicecom',
     current_status: 'Assistance',
-    created_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
@@ -96,7 +96,7 @@ const INITIAL_DEMO_LEADS: Lead[] = [
     assigned_to: 'worker-usertestdamicecom',
     created_by: 'worker-usertestdamicecom',
     current_status: 'Poko rele',
-    created_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
     updated_at: new Date().toISOString(),
   },
 ];
@@ -426,11 +426,17 @@ export default function DashboardPage() {
       console.warn('LocalStorage load notice:', e);
     }
 
-    // Always guarantee INITIAL_DEMO_LEADS are present for robust data display
+    // Always guarantee INITIAL_DEMO_LEADS are present for robust data display with accurate past timestamps
     const existingLeadPhones = new Set(fetchedLeads.map((l) => l.phone));
     INITIAL_DEMO_LEADS.forEach((demoLead) => {
       if (!existingLeadPhones.has(demoLead.phone)) {
         fetchedLeads.push(demoLead);
+      } else {
+        // Force update created_at timestamp for demo leads if loaded from older localStorage
+        const target = fetchedLeads.find((l) => l.phone === demoLead.phone);
+        if (target && target.id.startsWith('lead-demo-')) {
+          target.created_at = demoLead.created_at;
+        }
       }
     });
 
