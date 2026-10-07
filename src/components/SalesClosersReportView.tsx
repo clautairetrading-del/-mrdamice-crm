@@ -5,12 +5,11 @@ import { Profile, Lead, Call, CommissionConfig } from '@/types/crm';
 import { 
   ShoppingBag, 
   Search, 
-  Calendar, 
-  UserCheck, 
-  DollarSign, 
   CheckCircle2, 
   Filter,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Download,
+  FileText
 } from 'lucide-react';
 
 export interface ClosedSaleItem {
@@ -44,6 +43,7 @@ export function SalesClosersReportView({
   const [selectedProgram, setSelectedProgram] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   // 1. Build authoritative closed sales list combining live calls, leads, and demo seed items
   const salesList: ClosedSaleItem[] = [];
@@ -151,17 +151,170 @@ export function SalesClosersReportView({
   // Calculate Filtered Totals
   const totalFilteredRevenue = filteredSales.reduce((sum, item) => sum + item.price, 0);
   const totalFilteredCommissions = filteredSales.reduce((sum, item) => sum + item.commissionEarned, 0);
+  const companyNetProfit = Math.max(0, totalFilteredRevenue - totalFilteredCommissions);
 
   // Workers List for Dropdown Filter
   const workerOptions = allProfiles.filter((p) => p.role === 'worker' || p.email.toLowerCase().includes('user'));
 
+  // Get selected worker name for PDF header
+  const selectedWorkerObj = workerOptions.find((w) => w.email.toLowerCase() === selectedAgent.toLowerCase());
+  const selectedWorkerLabel = selectedAgent === 'all' 
+    ? 'TOUT WORKER YO (RAPÒ GLOBAL EKIP LA)' 
+    : (selectedWorkerObj ? `${selectedWorkerObj.full_name} (${selectedWorkerObj.email})` : selectedAgent);
+
+  // Date Range label for PDF header
+  let dateRangeLabel = 'Pèryòd Konplè (Tout Istwa)';
+  if (startDate && endDate) {
+    dateRangeLabel = `Soti nan ${startDate} rive ${endDate}`;
+  } else if (startDate) {
+    dateRangeLabel = `Depi ${startDate}`;
+  } else if (endDate) {
+    dateRangeLabel = `Jiska ${endDate}`;
+  }
+
+  // --- EXPORT PROFESSIONAL VECTOR PDF FOR EXECUTIVES & MEETINGS ---
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const reportTitle = `RAPO_KOMISYON_MR_DAMICE_${selectedAgent === 'all' ? 'GLOBAL' : selectedAgent.split('@')[0].toUpperCase()}_${todayStr}`;
+
+    let tableRowsHTML = '';
+    if (filteredSales.length > 0) {
+      filteredSales.forEach((sale, index) => {
+        tableRowsHTML += `
+          <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${sale.programName}</td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; font-weight: bold; color: #d97706; font-family: monospace;">$${sale.price.toLocaleString()} USD</td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">
+              <div style="font-weight: bold; color: #111827;">${sale.leadName}</div>
+              <div style="font-size: 11px; color: #6b7280; font-family: monospace;">${sale.phone}</div>
+            </td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb;">
+              <span style="background-color: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">
+                👤 ${sale.closerName}
+              </span>
+            </td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; font-size: 12px; font-family: monospace; color: #4b5563;">${sale.dateFormatted}</td>
+            <td style="padding: 10px 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #059669; font-family: monospace;">
+              $${sale.commissionEarned.toLocaleString()} USD
+            </td>
+          </tr>
+        `;
+      });
+    } else {
+      tableRowsHTML = `
+        <tr>
+          <td colspan="6" style="padding: 24px; text-align: center; color: #6b7280; font-size: 13px;">
+            Pa gen okenn lavant anregistre pou kritè filtraj sa yo.
+          </td>
+        </tr>
+      `;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      setIsExporting(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${reportTitle}</title>
+          <meta charset="utf-8" />
+          <style>
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              @page { size: A4 landscape; margin: 12mm; }
+            }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2937; margin: 0; padding: 20px; background: #fff; }
+            .header-box { border-bottom: 3px solid #f59e0b; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+            .title { font-size: 22px; font-weight: 900; color: #111827; margin: 0; }
+            .subtitle { font-size: 12px; color: #4b5563; margin-top: 4px; }
+            .badge-admin { background-color: #f59e0b; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+            .filter-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 14px; border-radius: 12px; margin-bottom: 20px; }
+            .summary-card { font-size: 12px; }
+            .summary-card label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #6b7280; display: block; margin-bottom: 2px; }
+            .summary-card val { font-size: 15px; font-weight: 900; color: #111827; font-family: monospace; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+            th { background-color: #f3f4f6; padding: 10px 12px; border: 1px solid #d1d5db; text-align: left; font-size: 11px; font-weight: 800; color: #374151; text-transform: uppercase; }
+            .footer-notes { margin-top: 25px; border-top: 1px solid #e5e7eb; padding-top: 12px; display: flex; justify-content: space-between; font-size: 10px; color: #9ca3af; }
+          </style>
+        </head>
+        <body>
+          
+          <!-- BRANDING HEADER -->
+          <div class="header-box">
+            <div>
+              <h1 class="title">MR DAMICE CRM — RAPÒ EXECUTIF AK KOMISYON AYEN YO</h1>
+              <div class="subtitle">Dokiman Ofisyèl pou Mitinn Fin Mwa / Prezantasyon Pèfòmans Ajan Yo</div>
+            </div>
+            <div className="badge-admin">RAPPÒ OFISYÈL ADMIN</div>
+          </div>
+
+          <!-- FILTERS & EXECUTIVE METRICS SUMMARY -->
+          <div class="filter-summary-grid">
+            <div class="summary-card">
+              <label>WORKER / CLOSER FILTRÉ</label>
+              <val style="color: #d97706;">${selectedWorkerLabel}</val>
+            </div>
+            <div class="summary-card">
+              <label>PERYÒD / DAT FILTRÉ</label>
+              <val style="color: #4b5563;">${dateRangeLabel}</val>
+            </div>
+            <div class="summary-card">
+              <label>TOTAL CHIFFRE D'AFFAIRES BRUT</label>
+              <val style="color: #d97706;">$${totalFilteredRevenue.toLocaleString()} USD</val>
+            </div>
+            <div class="summary-card">
+              <label>TOTAL KOMISYON PAGÉ AJAN YO</label>
+              <val style="color: #059669;">$${totalFilteredCommissions.toLocaleString()} USD</val>
+            </div>
+          </div>
+
+          <!-- MAIN SALES & CLOSERS TABLE -->
+          <table>
+            <thead>
+              <tr>
+                <th>PWOGRAM FÒMASYON</th>
+                <th>PRI VANT ($)</th>
+                <th>KLIYAN ACHTE (LEAD)</th>
+                <th>AJAN KI CLOS L (CLOSER)</th>
+                <th>DAT VANT</th>
+                <th style="text-align: right;">KOMISYON TOUCHÉ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHTML}
+            </tbody>
+          </table>
+
+          <!-- FOOTER & AUDIT STAMP -->
+          <div class="footer-notes">
+            <div>Generé an tan reyèl pa Sistèm MR DAMICE CRM (Supervision Admin) nan dat: ${new Date().toLocaleString('fr-FR')}</div>
+            <div>Dokiman Egzakt pou Paiement Komisyon ak Prezantasyon Mitinn</div>
+          </div>
+
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      setIsExporting(false);
+    }, 500);
+  };
+
   return (
     <div className="space-y-6">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/30 p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="space-y-1 text-center md:text-left">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
+      {/* Header Banner with Export PDF Button */}
+      <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/30 p-6 rounded-3xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="space-y-1 text-center lg:text-left">
+          <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center justify-center lg:justify-start gap-2">
             <ShoppingBag className="w-6 h-6 text-amber-500" />
             Rapò Detaye Lavant Ak Ajan Ki Clos Yo (Sales & Closers Menu)
           </h2>
@@ -170,15 +323,26 @@ export function SalesClosersReportView({
           </p>
         </div>
         
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="bg-white dark:bg-gray-800 border border-amber-500/30 px-4 py-2 rounded-2xl text-center shadow-xs">
             <span className="text-[10px] uppercase font-extrabold text-gray-500 block">Total Lavant Ki Filtre</span>
             <span className="text-lg font-black text-amber-600 dark:text-amber-400 font-mono">${totalFilteredRevenue.toLocaleString()} USD</span>
           </div>
+
           <div className="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 px-4 py-2 rounded-2xl text-center shadow-xs">
             <span className="text-[10px] uppercase font-extrabold text-emerald-600 dark:text-emerald-400 block">Komisyon Yo</span>
             <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">${totalFilteredCommissions.toLocaleString()} USD</span>
           </div>
+
+          {/* EXPORT PDF BUTTON */}
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold px-5 py-3 rounded-2xl text-xs shadow-md shadow-amber-500/20 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            {isExporting ? 'Génération PDF...' : 'Téléléchaje Rapò PDF (Meeting)'}
+          </button>
         </div>
       </div>
 
@@ -219,7 +383,7 @@ export function SalesClosersReportView({
               onChange={(e) => setSelectedAgent(e.target.value)}
               className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 font-medium"
             >
-              <option value="all">Tout Worker Yo</option>
+              <option value="all">TOUT WORKER YO (GLOBAL)</option>
               {workerOptions.map((w) => (
                 <option key={w.id} value={w.email}>
                   👤 {w.full_name} ({w.email})
