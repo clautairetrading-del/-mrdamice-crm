@@ -376,53 +376,74 @@ export function AdminDashboardView({
         </div>
       </div>
 
-      {/* 6. INDIVIDUAL AGENT BREAKDOWN TABLE */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-amber-500" />
-            Rapò Endividyèl pou Chak Ajan (Performance Breakdown)
-          </h3>
+      {/* WORKER OVERVIEW CONTAINER */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+          <div>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-amber-500" />
+              Apèrsi Ak Pèfòmans Anplwaye Yo (Worker Overview Container)
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Rezime an tan reyèl sou kantite leads jere, apèl reyalize, ak estatistik chak Worker nan sistèm nan.
+            </p>
+          </div>
+          <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-extrabold px-3 py-1 rounded-full">
+            {workerAgentsList.length} Worker Aktif
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
-            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs">
-              <tr>
-                <th className="px-6 py-4">Ajan Worker</th>
-                <th className="px-6 py-4">Apèl Jodi a</th>
-                <th className="px-6 py-4">Total Leads / Calls</th>
-                <th className="px-6 py-4">Total Closes</th>
-                <th className="px-6 py-4">Chiffre d'Affaires</th>
-                <th className="px-6 py-4 text-right">Komisyon Ajan an Touche</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {agentReports
-                .filter((r) => r.agent.role === 'worker' || r.agent.email.toLowerCase().includes('user'))
-                .map((report) => {
-                  const rev = report.revenue || (report.closesCount > 0 ? report.closesCount * commissionConfig.price199 : totalEnterpriseRevenue);
-                  const comm = report.commissionEarned || (rev * (commissionConfig.rate199 / 100));
-                  return (
-                    <tr key={report.agent.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/40 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                        {report.agent.full_name}
-                      </td>
-                      <td className="px-6 py-4 font-medium">{report.todayCalls || 1}</td>
-                      <td className="px-6 py-4 text-amber-600 dark:text-amber-400 font-medium">{report.weekCalls || leads.length}</td>
-                      <td className="px-6 py-4 font-bold text-amber-600 dark:text-amber-400">{report.closesCount > 0 ? report.closesCount : totalClosesCount}</td>
-                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
-                        ${rev.toLocaleString()} USD
-                      </td>
-                      <td className="px-6 py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                        ${comm.toLocaleString()} USD
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {workerAgentsList.map((worker) => {
+            const report = agentReports.find((r) => r.agent.email.toLowerCase() === worker.email.toLowerCase()) || {
+              todayCalls: 1,
+              weekCalls: leads.length,
+              monthCalls: leads.length,
+              closesCount: totalClosesCount,
+              revenue: totalEnterpriseRevenue,
+              commissionEarned: totalCommissionsPayout,
+            };
+
+            const workerRates = commissionConfig.workerRates?.[worker.email.toLowerCase()] || {
+              rate199: commissionConfig.rate199,
+              rate1000: commissionConfig.rate1000,
+            };
+
+            return (
+              <div key={worker.id} className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200/80 dark:border-gray-700/80 p-5 rounded-2xl space-y-3 hover:border-amber-500/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-sm">
+                      {worker.full_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white">{worker.full_name}</h4>
+                      <p className="text-[11px] text-gray-500 font-mono">{worker.email}</p>
+                    </div>
+                  </div>
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
+                  <div className="bg-white dark:bg-gray-800 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase block">Kantite Leads</span>
+                    <span className="text-sm font-black text-amber-600 dark:text-amber-400 font-mono">{report.weekCalls || leads.length}</span>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase block">Total Closes</span>
+                    <span className="text-sm font-black text-purple-600 dark:text-purple-400 font-mono">{report.closesCount || totalClosesCount}</span>
+                  </div>
+                </div>
+
+                <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300">Pousantaj Atribiye:</span>
+                  <span className="font-mono font-black text-amber-600 dark:text-amber-400">
+                    {workerRates.rate199}% ($199) | {workerRates.rate1000}% ($1000)
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
