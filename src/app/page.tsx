@@ -12,9 +12,10 @@ import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { WorkerReportsView } from '@/components/WorkerReportsView';
 import { SalesClosersReportView } from '@/components/SalesClosersReportView';
+import { AdminCommissionSettingsView } from '@/components/AdminCommissionSettingsView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText, ShoppingBag } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText, ShoppingBag, Settings } from 'lucide-react';
 
 const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
 const LOCAL_CALLS_KEY = 'mrdamice_crm_local_calls';
@@ -155,7 +156,7 @@ const INITIAL_DEMO_LOGS: HistoryLog[] = [
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin' | 'sales_report'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin' | 'sales_report' | 'commission_settings'>('dashboard');
 
   // Dynamic Commission & Pricing Config State
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig>(DEFAULT_COMMISSION_CONFIG);
@@ -804,6 +805,18 @@ export default function DashboardPage() {
                   <ShoppingBag className="w-5 h-5" />
                   Rapò Lavant & Closers
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('commission_settings')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                    activeTab === 'commission_settings'
+                      ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Settings className="w-5 h-5" />
+                  Paramèt Pri & Komisyon
+                </button>
               </>
             )}
 
@@ -1303,6 +1316,14 @@ export default function DashboardPage() {
             calls={calls}
             allProfiles={allProfiles}
             commissionConfig={commissionConfig}
+          />
+        )}
+
+        {/* Tab 6: Dedicated Admin Commission & Pricing Settings View */}
+        {activeTab === 'commission_settings' && isAdmin && (
+          <AdminCommissionSettingsView
+            commissionConfig={commissionConfig}
+            onUpdateCommissionConfig={handleUpdateCommissionConfig}
           />
         )}
 
