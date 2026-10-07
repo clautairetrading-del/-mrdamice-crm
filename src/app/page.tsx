@@ -11,9 +11,10 @@ import { CalendarView } from '@/components/CalendarView';
 import { WorkerDashboardCharts } from '@/components/WorkerDashboardCharts';
 import { AdminDashboardView } from '@/components/AdminDashboardView';
 import { WorkerReportsView } from '@/components/WorkerReportsView';
+import { SalesClosersReportView } from '@/components/SalesClosersReportView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AuthScreen } from '@/components/AuthScreen';
-import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Shield, Search, Eye, LogOut, FileSpreadsheet, PhoneCall, UserPlus, Calendar, FileText, ShoppingBag } from 'lucide-react';
 
 const LOCAL_LEADS_KEY = 'mrdamice_crm_local_leads';
 const LOCAL_CALLS_KEY = 'mrdamice_crm_local_calls';
@@ -154,7 +155,7 @@ const INITIAL_DEMO_LOGS: HistoryLog[] = [
 export default function DashboardPage() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'calendar' | 'reports' | 'admin' | 'sales_report'>('dashboard');
 
   // Dynamic Commission & Pricing Config State
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig>(DEFAULT_COMMISSION_CONFIG);
@@ -777,19 +778,33 @@ export default function DashboardPage() {
 
           {/* Nav Links */}
           <nav className="space-y-2">
-            {/* ADMIN ONLY MENU ITEM */}
+            {/* ADMIN ONLY MENU ITEMS */}
             {isAdmin && (
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'admin'
-                    ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <Shield className="w-5 h-5" />
-                Panèl Kontwòl Admin
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                    activeTab === 'admin'
+                      ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Shield className="w-5 h-5" />
+                  Panèl Kontwòl Admin
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('sales_report')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                    activeTab === 'sales_report'
+                      ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  Rapò Lavant & Closers
+                </button>
+              </>
             )}
 
             {/* WORKER ONLY DASHBOARD */}
@@ -1278,6 +1293,16 @@ export default function DashboardPage() {
                 commissionEarned: commissionEarned,
               };
             })}
+          />
+        )}
+
+        {/* Tab 5: Dedicated Sales & Closers Report View */}
+        {activeTab === 'sales_report' && isAdmin && (
+          <SalesClosersReportView
+            leads={leads}
+            calls={calls}
+            allProfiles={allProfiles}
+            commissionConfig={commissionConfig}
           />
         )}
 
