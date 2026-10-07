@@ -709,9 +709,10 @@ export default function DashboardPage() {
   );
 
   // Closes Breakdown ($199 vs $1,000) scoped strictly to Worker profile
-  const closes199 = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length 
-    || myLeadsList.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
-  const closes1000 = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
+  const closes199Calls = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Fòmasyon $199 USD').length;
+  const closes1000Calls = myCalls.filter((c) => (c.status === 'Close' || c.status === 'Assistance') && c.closed_program === 'Done For You $1,000 USD').length;
+  const closes199 = closes199Calls > 0 ? closes199Calls : myLeadsList.filter((l) => (l.current_status === 'Close' || l.current_status === 'Assistance')).length;
+  const closes1000 = closes1000Calls;
 
   // Dynamic 7-Day Live Bar Chart Data (Lendi to Dimanch)
   const dayNames = ['Dimanch', 'Lendi', 'Madi', 'Mèkredi', 'Jedi', 'Vandredi', 'Samdi'];
@@ -1215,7 +1216,6 @@ export default function DashboardPage() {
             leads={leads}
             historyLogs={historyLogs}
             onReassignLead={handleReassignLead}
-            onResetDemoData={handleResetOrSeedDemoData}
             agentReports={allProfiles.map((p) => {
               const isWorkerProfile = p.role === 'worker' || p.email.toLowerCase().includes('user');
 
