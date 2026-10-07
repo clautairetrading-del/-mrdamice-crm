@@ -151,6 +151,33 @@ const INITIAL_DEMO_LOGS: HistoryLog[] = [
     comment: 'Lavant Done For You $1,000 USD reyisi.',
     created_at: new Date(Date.now() - 86400000).toISOString(),
   },
+  {
+    id: 'log-demo-3',
+    lead_id: 'lead-demo-3',
+    agent_id: 'worker-usertestdamicecom',
+    action_type: 'CALL_UPDATED_STATUS',
+    status: 'Gen follow up',
+    comment: 'Apèl reyalize ak Pierre Richard - Yo pwograme yon rande-vou follow up.',
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+  },
+  {
+    id: 'log-demo-4',
+    lead_id: 'lead-demo-4',
+    agent_id: 'worker-usertestdamicecom',
+    action_type: 'CALL_UPDATED_STATUS',
+    status: 'Assistance',
+    comment: 'Florence Joseph mande asistans sou peman an.',
+    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+  },
+  {
+    id: 'log-demo-5',
+    lead_id: 'lead-demo-5',
+    agent_id: 'worker-usertestdamicecom',
+    action_type: 'LEAD_CREATED',
+    status: 'Poko rele',
+    comment: 'Nouvo lead Emmanuel Moïse anregistre nan sistèm nan.',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
 ];
 
 export default function DashboardPage() {
@@ -513,12 +540,21 @@ export default function DashboardPage() {
       console.warn('Local logs load notice:', e);
     }
 
-    // Always guarantee INITIAL_DEMO_LOGS are present
+    // Always guarantee INITIAL_DEMO_LOGS are present and update status/comment if loaded from older localStorage
     const existingLogIds = new Set(fetchedLogs.map((l) => l.id));
     INITIAL_DEMO_LOGS.forEach((demoLog) => {
+      const agentProf = cleanedProfiles.find((p) => p.id === demoLog.agent_id || p.email === demoLog.agent_id);
       if (!existingLogIds.has(demoLog.id)) {
-        const agentProf = cleanedProfiles.find((p) => p.id === demoLog.agent_id || p.email === demoLog.agent_id);
         fetchedLogs.push({ ...demoLog, agent: agentProf });
+      } else {
+        const targetLog = fetchedLogs.find((l) => l.id === demoLog.id);
+        if (targetLog) {
+          targetLog.status = demoLog.status;
+          targetLog.closed_program = demoLog.closed_program;
+          targetLog.comment = demoLog.comment;
+          targetLog.action_type = demoLog.action_type;
+          targetLog.agent = agentProf;
+        }
       }
     });
 
