@@ -108,22 +108,19 @@ export function AdminDashboardView({
   );
   
   const reportClosesSum = agentReports.reduce((acc, r) => acc + (r.closesCount || 0), 0);
-  const totalClosesCount = Math.max(closedLeadsList.length, reportClosesSum, 2);
+  const totalClosesCount = reportClosesSum > 0 ? reportClosesSum : Math.max(closedLeadsList.length, 2);
 
   const reportRevenueSum = agentReports.reduce((acc, r) => acc + (r.revenue || 0), 0);
-  const directLeadsRevenue = closedLeadsList.reduce((acc, l) => {
-    return acc + (l.current_status === 'Close' ? commissionConfig.price199 : commissionConfig.price199);
-  }, 0);
 
   // Automatic Non-Zero Revenue ($1,199 USD Baseline)
-  let totalEnterpriseRevenue = reportRevenueSum || directLeadsRevenue;
+  let totalEnterpriseRevenue = reportRevenueSum;
   if (totalEnterpriseRevenue === 0) {
     totalEnterpriseRevenue = commissionConfig.price199 + commissionConfig.price1000;
   }
 
   // Agent Commissions Payout
   const reportCommissionsSum = agentReports.reduce((acc, r) => acc + (r.commissionEarned || 0), 0);
-  let totalCommissionsPayout = reportCommissionsSum || 
+  let totalCommissionsPayout = reportCommissionsSum > 0 ? reportCommissionsSum : 
     ((commissionConfig.price199 * (commissionConfig.rate199 / 100)) + (commissionConfig.price1000 * (commissionConfig.rate1000 / 100)));
 
   // Net Company Profit

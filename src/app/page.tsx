@@ -1253,10 +1253,7 @@ export default function DashboardPage() {
                 closes199Count = totalClosedLeadsForAgent;
               }
 
-              const totalClosesCount = Math.max(
-                agentCalls.filter((c) => c.status === 'Close' || c.status === 'Assistance').length,
-                totalClosedLeadsForAgent
-              );
+              const totalClosesCount = (closes199Count + closes1000Count) || totalClosedLeadsForAgent;
 
               const totalCallsCount = Math.max(
                 agentCalls.length,
@@ -1278,8 +1275,8 @@ export default function DashboardPage() {
                 weekCalls: totalCallsCount,
                 monthCalls: totalCallsCount,
                 closesCount: totalClosesCount,
-                revenue: revenue || (totalClosesCount * commissionConfig.price199),
-                commissionEarned: commissionEarned || ((totalClosesCount * commissionConfig.price199) * (commissionConfig.rate199 / 100)),
+                revenue: revenue,
+                commissionEarned: commissionEarned,
               };
             })}
           />
