@@ -57,7 +57,12 @@ export function SalesClosersReportView({
     );
     const is1000 = call.closed_program === 'Done For You $1,000 USD';
     const price = is1000 ? commissionConfig.price1000 : commissionConfig.price199;
-    const rate = is1000 ? commissionConfig.rate1000 : commissionConfig.rate199;
+    const workerEmail = agent?.email.toLowerCase() || 'usertest@damice.com';
+    const customWorkerRates = commissionConfig.workerRates?.[workerEmail] || {
+      rate199: commissionConfig.rate199,
+      rate1000: commissionConfig.rate1000,
+    };
+    const rate = is1000 ? customWorkerRates.rate1000 : customWorkerRates.rate199;
     const commission = price * (rate / 100);
 
     const callDate = call.created_at ? new Date(call.created_at) : new Date();

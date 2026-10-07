@@ -1290,9 +1290,14 @@ export default function DashboardPage() {
 
               const revenue = (closes199Count * commissionConfig.price199) + (closes1000Count * commissionConfig.price1000);
               
-              // Dynamic commission calculation based on Admin Config percentage rates
-              const commissionEarned = ((closes199Count * commissionConfig.price199) * (commissionConfig.rate199 / 100)) + 
-                                       ((closes1000Count * commissionConfig.price1000) * (commissionConfig.rate1000 / 100));
+              // Dynamic per-worker commission calculation based on Admin Config percentage rates
+              const customRates = commissionConfig.workerRates?.[p.email.toLowerCase()] || {
+                rate199: commissionConfig.rate199,
+                rate1000: commissionConfig.rate1000,
+              };
+
+              const commissionEarned = ((closes199Count * commissionConfig.price199) * (customRates.rate199 / 100)) + 
+                                       ((closes1000Count * commissionConfig.price1000) * (customRates.rate1000 / 100));
 
               return {
                 agent: p,
@@ -1322,6 +1327,7 @@ export default function DashboardPage() {
         {/* Tab 6: Dedicated Admin Commission & Pricing Settings View */}
         {activeTab === 'commission_settings' && isAdmin && (
           <AdminCommissionSettingsView
+            allProfiles={allProfiles}
             commissionConfig={commissionConfig}
             onUpdateCommissionConfig={handleUpdateCommissionConfig}
           />

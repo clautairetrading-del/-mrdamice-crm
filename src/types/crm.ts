@@ -13,11 +13,17 @@ export type OfferProgram =
   | 'Fòmasyon $199 USD'
   | 'Done For You $1,000 USD';
 
+export interface WorkerCommissionRate {
+  rate199: number;  // percentage e.g. 15 for 15%
+  rate1000: number; // percentage e.g. 20 for 20%
+}
+
 export interface CommissionConfig {
   price199: number;
-  rate199: number; // percentage e.g. 15 for 15%
+  rate199: number; // default global percentage
   price1000: number;
-  rate1000: number; // percentage e.g. 20 for 20%
+  rate1000: number; // default global percentage
+  workerRates?: Record<string, WorkerCommissionRate>; // key: worker email/id -> rates
 }
 
 export const DEFAULT_COMMISSION_CONFIG: CommissionConfig = {
@@ -25,6 +31,7 @@ export const DEFAULT_COMMISSION_CONFIG: CommissionConfig = {
   rate199: 15,
   price1000: 1000,
   rate1000: 20,
+  workerRates: {},
 };
 
 export interface Profile {
